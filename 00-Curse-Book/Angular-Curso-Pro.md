@@ -303,3 +303,193 @@ export default class CalculatorViewComponent {
 ```
 
 Dado que el componente no está definido dentro de un módulo, podemos importarlo directamente de esa forma.
+
+
+## Diseño
+
+El códido del template descargado del sitio del curso, genera la siguiente calculadora
+
+
+<img src="./imagenes/01-zoneless-calculator-01.png" alt="Imagen" style="margin-right: 10px; width: 30%; height: auto; border: 1px solid black" />
+
+Contiene mucho código repetido que vamos a transformar en componentes. El template completo es el siguiente:
+
+```html
+<div class="min-w-screen min-h-screen bg-gray-100 flex items-center justify-center px-5 py-5">
+    <div class="w-full mx-auto rounded-xl bg-gray-100 shadow-xl text-gray-800 relative overflow-hidden" style="max-width:300px">
+        <div class="w-full h-40 bg-gradient-to-b from-gray-800 to-gray-700 flex items-end text-right">
+            <div class="w-full py-5 px-6 text-6xl text-white font-thin">340.0</div>
+        </div>
+        <div class="w-full bg-gradient-to-b from-indigo-400 to-indigo-500">
+            <div class="flex w-full">
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">C</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">+/-</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">%</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none bg-indigo-700 bg-opacity-10 hover:bg-opacity-20 text-white text-2xl font-light">÷</button>
+                </div>
+            </div>
+            <div class="flex w-full">
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">7</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">8</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">9</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none bg-indigo-700 bg-opacity-10 hover:bg-opacity-20 text-white text-xl font-light">⨉</button>
+                </div>
+            </div>
+            <div class="flex w-full">
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">4</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">5</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">6</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none bg-indigo-700 bg-opacity-10 hover:bg-opacity-20 text-white text-xl font-light">-</button>
+                </div>
+            </div>
+            <div class="flex w-full">
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">1</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">2</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">3</button>
+                </div>
+                <div class="w-1/4 border-r border-b border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none bg-indigo-700 bg-opacity-10 hover:bg-opacity-20 text-white text-xl font-light">+</button>
+                </div>
+            </div>
+            <div class="flex w-full">
+                <div class="w-1/4 border-r border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">0</button>
+                </div>
+                <div class="w-1/4 border-r border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-xl font-light">.</button>
+                </div>
+                <div class="w-2/4 border-r border-indigo-400">
+                    <button class="w-full h-16 outline-none focus:outline-none bg-indigo-700 bg-opacity-30 hover:bg-opacity-40 text-white text-xl font-light">=</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+Un componente Button que reciba el texto a desplegar y algunas clases podría evitar esta repetición de código.
+
+
+## Componentes
+
+Creamos:
+
+```bash
+$ ng g c calculator/components/calculator
+```
+
+Crearemos la siguiente estrucura de componentes
+
+```bash
+└──App-Component
+  └── Calculator-View
+    └── Calculator
+      ├── Buttons
+      └── Other Components
+```
+
+Primeramente el App Component unicamente contiene el wrapper de toda la app.
+
+```html
+<div class="min-w-screen min-h-screen bg-slate-600 flex items-center justify-center px-5 py-5">
+    <router-outlet></router-outlet>
+</div>
+```
+
+Por medio de las rutas, el **router-outlet** mostrará el componente indicado, en este caso, el **path: 'calculator',** mostrará el **Calculator-View
+
+El template del Calculator-View es:
+
+```html
+<div class="w-full mx-auto rounded-xl bg-gray-100 shadow-xl text-gray-800 relative overflow-hidden">
+    <calculator></calculator>
+</div>
+```
+
+En este caso tomamos el siguiente contenedor y dentro de este mostraremos el componente calculator
+
+
+Calculator por el momento contiene todo lo demás del template original
+
+
+<aside class="nota-importante">
+<p>Dado que estamos usando standalone component en este proyecto, no es necesario crear los módulos, simplemente creamos los componentes y los importamos donde sean necesarios</p>
+</aside>
+
+
+El Calculator Component
+
+```typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+@Component({
+  selector: 'calculator',
+  standalone: true,
+  imports: [],
+  templateUrl: './calculator.component.html',
+  styleUrl: './calculator.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CalculatorComponent {
+
+}
+```
+
+El Calculator-View Component, lo importa y lo usa en su template
+
+```typescript
+import { CalculatorComponent } from '@/calculator/components/calculator/calculator.component';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+@Component({
+  selector: 'calculator-view',
+  standalone: true,
+  imports: [ CalculatorComponent],
+  templateUrl: './calculator-view.component.html',
+  styleUrl: './calculator-view.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export default class CalculatorViewComponent {
+
+}
+```
+
+## Cambios en la estructura del HTML
+
+Al agregar componentes, el HTML original se renderiza con DIVS adicionales, tal como se nota en la siguiente imagen, esto puede generar que el diseño original cambie debido a que se rompe la secuencia de elementos hijos.
+
+<img src="./imagenes/01-zoneless-calculator-02.png" alt="Imagen" style="margin-right: 10px; width: 80%; height: auto; border: 1px solid black" />
+
+Esto implica que a veces se tenga que modificar el HTML original para mostrarse tal como se hacía al inicio, antes de introducir componentes.
+
+En amarillo se muestran los cambios aplicados para mantener el diseño original.
+
+Al introducir los siguiente componentes, como los botones, vamos a tener el mismo escenario.
+
+El problema con esta solución es que a veces no podremos cambiar el estilo facilmente, y si deseamos mantener el mismo diseño original, debemos buscar otra solución, aca es donde aparecen los host-components.
