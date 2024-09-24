@@ -493,3 +493,149 @@ En amarillo se muestran los cambios aplicados para mantener el diseño original.
 Al introducir los siguiente componentes, como los botones, vamos a tener el mismo escenario.
 
 El problema con esta solución es que a veces no podremos cambiar el estilo facilmente, y si deseamos mantener el mismo diseño original, debemos buscar otra solución, aca es donde aparecen los host-components.
+
+## Host Element
+
+La calculadora cuenta con una serie de botones:
+
+```html
+<div class="w-1/4 border-r border-b border-indigo-400">
+    <button
+        class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">
+            C
+    </button>
+</div>
+```
+
+Transformar esto a un componente normal, introducirá DIV's adicionales que van a romper el estilo original.
+
+Creamos el componente:
+
+```bash
+$ ng g c calculator/components/calculator-button
+```
+
+Copiamos (cortamo) el HTML del boton (incluyendo el DIV) y lo agregamos al template del nuevo componente
+
+```html
+<div class="w-1/4 border-r border-b border-indigo-400">
+    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">C</button>
+</div>
+```
+
+Importamos el componente en el **CalculatorComponent**
+
+```typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CalculatorButtonComponent } from '../calculator-button/calculator-button.component';
+
+@Component({
+  selector: 'calculator',
+  standalone: true,
+  imports: [CalculatorButtonComponent],
+  templateUrl: './calculator.component.html',
+  styleUrl: './calculator.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CalculatorComponent {
+
+}
+```
+
+Y lo agregamos en lugar del HTML cortado.
+
+```html
+<calculator-button></calculator-button>
+```
+
+Esto genera un DIV adicioanl que rompe el estilo
+
+<img src="./imagenes/01-zoneless-calculator-04.png" alt="Imagen" style="margin-right: 10px; width: 70%; height: auto; border: 1px solid black" />
+
+El resultado es que el boton **"C"** no ocupa el 25% del ancho (Clase **w-1/4**)
+
+<img src="./imagenes/01-zoneless-calculator-03.png" alt="Imagen" style="margin-right: 10px; width: 30%; height: auto; border: 1px solid black" />
+
+## ngContent
+
+La proyección de contenido es un patrón en el que se inserta o proyecta el contenido que se desea utilizar dentro de otro componente.
+
+En nuestro ComponentButton podemos usar **ng-content**
+
+```html
+<button class="...">
+    <ng-content></ng-content>
+</button>
+```
+
+Y llamarlo de esta forma:
+
+```html
+<calculator-button>C</calculator-button>
+```
+
+Aun tenemos el problema original, pero ya podemos enviar el label del botón usando el ng-content, en este momento el HTML se ve de esta forma
+
+<img src="./imagenes/01-zoneless-calculator-05.png" alt="Imagen" style="margin-right: 10px; width: 70%; height: auto; border: 1px solid black" />
+
+Lo que necesitamos para tener el diseño original es que las clases marcadas en verde, puedan aplicarse al DIV generado por Angular en amarillo.
+
+Para lograr esto, cambiaremos el template del boton
+
+```html
+<div class="w-1/4 border-r border-b border-indigo-400">
+    <button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">
+        <ng-content></ng-content>
+    </button>
+</div>
+```
+
+Eliminamos el DIV y dejamos únicamente el button, y las clases del DIV las vamos a agregar al componente directamente
+
+```typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+@Component({
+  selector: 'calculator-button',
+  standalone: true,
+  imports: [],
+  templateUrl: './calculator-button.component.html',
+  styleUrl: './calculator-button.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'w-1/4 border-r border-b border-indigo-400',
+  },
+})
+export class CalculatorButtonComponent {
+
+}
+```
+
+Notar como hemos agregado el host
+
+```typescript
+host: {
+    class: 'w-1/4 border-r border-b border-indigo-400',
+  },
+```
+
+De esta forma, el diseño origina se reestablece y el HTML queda de la siguiente manera
+
+<img src="./imagenes/01-zoneless-calculator-06.png" alt="Imagen" style="margin-right: 10px; width: 70%; height: auto; border: 1px solid black" />
+
+
+Ahora podemos usar nuestro nuevo componente
+
+```html
+<div class="flex w-full">
+    <calculator-button>C</calculator-button>
+    <calculator-button>+/-</calculator-button>
+    <calculator-button>%</calculator-button>
+    <calculator-button>÷</calculator-button>
+</div>
+```
+
+Y de esta forma, hemos simplificado el HTML.
+
+El único problema que tenemos es que el último botón, tiene un color de fondo diferente, y ahora mismo estamos aplicando mas mismas clases a los botones por medio del host.
+
