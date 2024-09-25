@@ -637,5 +637,134 @@ Ahora podemos usar nuestro nuevo componente
 
 Y de esta forma, hemos simplificado el HTML.
 
-El único problema que tenemos es que el último botón, tiene un color de fondo diferente, y ahora mismo estamos aplicando mas mismas clases a los botones por medio del host.
+El único problema que tenemos es que el último botón, tiene un color de fondo diferente, y ahora mismo estamos aplicando las mismas clases a los botones por medio del host.
+
+## InputSignal y HostBidings
+
+Antes de usar los Inputs y HostBiding moveremos el CSS del Boton a su CSS correspondiente
+
+```html
+<button class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">
+    <ng-content></ng-content>
+</button>
+```
+
+Todas las class dle button la agregamos al archivo **calculator-button.component.css**
+
+```css
+button {
+    @apply w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light
+}
+```
+
+Luega aplicamos estos cambios en el componente
+
+```typescript
+export class CalculatorButtonComponent {
+
+  public isCommand = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  )
+
+  @HostBinding('class.bg-indigo-700') get CommandStyle() {
+    return this.isCommand();
+  }
+
+}
+```
+
+Además de estos cambios en el typescript, ahora podemos usar el atributo en el componente
+
+```html
+<calculator-button isCommand>÷</calculator-button>
+```
+
+Ahora el componente tiene un atributo llamado **isCommand**. Este atributo se usa para indicar que este botón es un "__comando__" en la calculadora (como los operadores **÷, ×, +**, etc.), en lugar de un número.
+
+
+```typescript
+public isCommand = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  )
+```
+
+**isCommand** es una propiedad del componente que puede ser configurada desde el HTML cuando el componente es utilizado. Se está utilizando una función __input()__ para definir el valor de esta propiedad.
+
+**false**: Este es el valor predeterminado de **isCommand**, lo que significa que, si no se proporciona este atributo en el HTML, el botón no será tratado como un comando.
+
+**transform**: Esta es una transformación que se aplica al valor de **isCommand** cuando se pasa desde el HTML. Si **isCommand** es una cadena vacía (''), se considerará como true (ya que en Angular, cuando un atributo se presenta sin valor, se lo trata como verdadero). Si no es una cadena vacía, entonces **isCommand** tomará el valor correspondiente.
+
+De modo que esto `<calculator-button isCommand>÷</calculator-button>` definirá isCommand en true y esto `<calculator-button isCommand='false'>÷</calculator-button>` y también esto `<calculator-button>÷</calculator-button>` definirá isCommand en false.
+
+**Host Binding (Decorador @HostBinding):**
+
+El decorador **@HostBinding** vincula una clase CSS al componente cuando la propiedad **isCommand** es verdadera. En este caso, cuando el valor de **isCommand** es verdadero (true), se aplica la clase CSS **bg-indigo-700**.
+
+El método **CommandStyle** usa **isCommand()** para determinar si debe aplicar la clase **bg-indigo-700.**
+
+
+## Multiples class en el HostBiding
+
+Si necesitaramos agregar más clases al HostBiding, lo ideal es definir una clase en el CSS, por ejemplo:
+
+```css
+.is-commnad {
+    @apply bg-indigo-700 bg-opacity-20 text-opacity-100
+}
+```
+
+## View Encapsulation
+
+El cambio anterior aplica la clase **is-command** al componente hosting, este es el HTML renderizado
+
+```html
+<calculator-button _ngcontent-ng-c90236445="" iscommand="" class="w-1/4 border-r border-b border-indigo-400 is-commnad" _nghost-ng-c4087423074="" ng-reflect-is-command="">
+    <button _ngcontent-ng-c4087423074="" class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">
+        ÷
+    </button>
+</calculator-button>
+```
+
+Recordemos que el **<calculator-button isCommand>÷</calculator-button>** está definido en el compoente externo **Calculator-Component** mientras que el is-command lo estamos definiendo en a nivel del componente interno **Calculator-Button** por lo tanto, si bien agregamos la clase **is-command**, el estilo no se aplica, porque no está en su scope.
+
+Una forma de solucionar es definir la clase **is-command** en el style.css global de la APP.
+
+otra forma de solucionarlo es mantener la clase **is-command** en nuestro archivo **calculator-button.component.css** pero definirla con el atributo **::ng-deep**
+
+```css
+::ng-deep .is-commnad {
+    @apply bg-indigo-700 bg-opacity-20 text-opacity-100
+}
+```
+
+Esto no se recomienda porque Angular ha deprecado ese atributo.
+
+La otra opción es indicarle a Angular que ese componente no encpasule nada, esto lo logramos si agregamos `encapsulation: ViewEncapsulation.None,` a la definición del componente:
+
+```typescript
+Component({
+  selector: 'calculator-button',
+  standalone: true,
+  imports: [],
+  templateUrl: './calculator-button.component.html',
+  styleUrl: './calculator-button.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'w-1/4 border-r border-b border-indigo-400',
+  },
+  encapsulation: ViewEncapsulation.None,
+})
+```
+
+Esto sigue siendo una solución no ideal, porque podemos filtrar ciertos estilos a otros componentes, ya que estos estilos estarían disponibles a nivel global.
+
+
+La solución ideal es colocar el is-command en el CSS del componente padre, en el archivo `calculator.component.css`
+
 
