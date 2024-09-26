@@ -20,9 +20,4 @@ export class CalculatorButtonComponent {
       transform: (value: string) => typeof value === 'string' ? value === '' : value,
     }
   )
-
-  @HostBinding('class.is-commnad') get CommandStyle() {
-    return this.isCommand();
-  }
-
 }

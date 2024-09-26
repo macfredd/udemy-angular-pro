@@ -714,7 +714,7 @@ El método **CommandStyle** usa **isCommand()** para determinar si debe aplicar 
 Si necesitaramos agregar más clases al HostBiding, lo ideal es definir una clase en el CSS, por ejemplo:
 
 ```css
-.is-commnad {
+.is-command {
     @apply bg-indigo-700 bg-opacity-20 text-opacity-100
 }
 ```
@@ -724,7 +724,7 @@ Si necesitaramos agregar más clases al HostBiding, lo ideal es definir una clas
 El cambio anterior aplica la clase **is-command** al componente hosting, este es el HTML renderizado
 
 ```html
-<calculator-button _ngcontent-ng-c90236445="" iscommand="" class="w-1/4 border-r border-b border-indigo-400 is-commnad" _nghost-ng-c4087423074="" ng-reflect-is-command="">
+<calculator-button _ngcontent-ng-c90236445="" iscommand="" class="w-1/4 border-r border-b border-indigo-400 is-command" _nghost-ng-c4087423074="" ng-reflect-is-command="">
     <button _ngcontent-ng-c4087423074="" class="w-full h-16 outline-none focus:outline-none hover:bg-indigo-700 hover:bg-opacity-20 text-white text-opacity-50 text-xl font-light">
         ÷
     </button>
@@ -738,7 +738,7 @@ Una forma de solucionar es definir la clase **is-command** en el style.css globa
 otra forma de solucionarlo es mantener la clase **is-command** en nuestro archivo **calculator-button.component.css** pero definirla con el atributo **::ng-deep**
 
 ```css
-::ng-deep .is-commnad {
+::ng-deep .is-command {
     @apply bg-indigo-700 bg-opacity-20 text-opacity-100
 }
 ```
@@ -768,3 +768,36 @@ Esto sigue siendo una solución no ideal, porque podemos filtrar ciertos estilos
 La solución ideal es colocar el is-command en el CSS del componente padre, en el archivo `calculator.component.css`
 
 
+Aún con esta solución, estamos aplicando un estilo a un nivel superior, la solucion final ideal debe ser aplicar el estilo directamente en el ambito del ComponentButton, es decir directamente al botón.
+
+Primero regresamos el CSS siguiente al **calculator-button.component.css**
+
+```css
+.is-command {
+    @apply bg-indigo-700 bg-opacity-20 text-opacity-100
+}
+```
+
+Segundo, eliminamos el **HostBiding** del componente **CalculatorButtonComponent**
+
+```typescript
+@HostBinding('class.is-command') get CommandStyle() {
+    return this.isCommand();
+  }
+```
+
+Finalmente en el template 
+
+```html
+<button [class.is-command]="isCommand()">
+    <ng-content/>
+</button>
+```
+
+Agregará la clase **is-command** cuando `isCommand()` nuestro public input sea true. Esto genera el HTML siguiente para el botón **÷**
+
+```html
+<calculator-button _ngcontent-ng-c90236445="" iscommand="" class="w-1/4 border-r border-b border-indigo-400" ng-reflect-is-command="">
+    <button class="is-command">÷</button>
+</calculator-button>
+```
