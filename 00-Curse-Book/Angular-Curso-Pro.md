@@ -794,10 +794,89 @@ Finalmente en el template
 </button>
 ```
 
-Agregará la clase **is-command** cuando `isCommand()` nuestro public input sea true. Esto genera el HTML siguiente para el botón **÷**
+Agregará la clase **is-command** cuando `isCommand()`,nuestro public input, sea true. Esto genera el HTML siguiente para el botón **÷**
 
 ```html
 <calculator-button _ngcontent-ng-c90236445="" iscommand="" class="w-1/4 border-r border-b border-indigo-400" ng-reflect-is-command="">
     <button class="is-command">÷</button>
 </calculator-button>
 ```
+
+De esta forma el CSS queda aplicado a nivel del botón directamente y a la vez, dicha regla se define a nivel del mismo componente, respetando el encapsulamiento y evitando conflictos con otras reglas en nuestra app.
+
+## Double Size
+El botón "=" a parte de ser un comando tiene un ancho doble
+
+<img src="./imagenes/01-zoneless-calculator-07.png" alt="Imagen" style="margin-right: 10px; width: 30%; height: auto; border: 1px solid black" />
+
+Para aplicar la clase "w-2/4" usaremos el **@HostBinding** y agregaremos un nuevo input: **isDoubleSize**
+
+
+```typescript
+export class CalculatorButtonComponent {
+
+  public isCommand = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  )
+
+  public isDoubleSize = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  );
+
+  @HostBinding('class') get DobleSizeStyle() {
+    return this.isDoubleSize() ? 'w-2/4' : 'w-1/4';
+  }
+}
+```
+
+Finalmente en el template usamos el nuevo atributo:
+
+```html
+<calculator-button isCommand isDoubleSize>=</calculator-button>
+```
+
+De esta forma logramos aplicar la clase **w-2/4** al botón.
+
+```html
+<calculator-button
+    _ngcontent-ng-c878039076="" iscommand="" isdoublesize=""
+    class="border-r border-b border-indigo-400 w-2/4" ng-reflect-is-command="" ng-reflect-is-double-size="">
+        <button class="is-command">
+            =
+        </button>
+</calculator-button>
+```
+
+<aside class="nota-importante">
+<p>Para evitar un conflicto de classes css, se aplicó un cambio, la clase w-* ahora es definida por el @HostBinding en lugar del host: {} directamente en el componente</p>
+</aside>
+
+**Nota agregada al curso:**
+
+La solución propuesta en el curso genera un "conflicto" de clases css, el elemento host puede llegar a contener ambas clases w-1/2 y w-2/4 siendo lo correcto que solo se incluya una de ellas.
+
+
+Yo haría esto: perimero remover el w-1/2 del Host
+
+```json
+    host: {
+        class: 'border-r border-b border-indigo-400',
+      },
+```
+
+y luego en el @HostBinding definir una de ellas
+
+``` typescript
+    @HostBinding('class') get DobleSizeStyle() {
+        return this.isDoubleSize() ? 'w-2/4' : 'w-1/4';
+      }
+```
+
+Con esto evitamos el conflicto entre las clases w-1/2 y w-2/4
+
