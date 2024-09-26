@@ -8,7 +8,7 @@ import { ChangeDetectionStrategy, Component, HostBinding, input, ViewEncapsulati
   styleUrl: './calculator-button.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'w-1/4 border-r border-b border-indigo-400',
+    class: 'border-r border-b border-indigo-400',
   },
   encapsulation: ViewEncapsulation.None,
 })
@@ -20,4 +20,15 @@ export class CalculatorButtonComponent {
       transform: (value: string) => typeof value === 'string' ? value === '' : value,
     }
   )
+
+  public isDoubleSize = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  );
+
+  @HostBinding('class') get DobleSizeStyle() {
+    return this.isDoubleSize() ? 'w-2/4' : 'w-1/4';
+  }
 }
