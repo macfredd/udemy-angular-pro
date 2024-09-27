@@ -59,7 +59,7 @@ git config --global user.email "Tu correo"
 ```
 
 5. [Docker Desktop](https://www.docker.com/get-started)
-  
+
 
 ## AngularCLI
 Documentación [oficial de Angular CLI](https://angular.io/cli)
@@ -879,4 +879,91 @@ y luego en el @HostBinding definir una de ellas
 ```
 
 Con esto evitamos el conflicto entre las clases w-1/2 y w-2/4
+
+<div style="page-break-after: always;"></div>
+
+# Nueva Sección: Señales, comportamiento y lógica
+
+## ¿Qué veremos en esta sección?
+
+- Host Property - Condicional
+- Remover Hostlisterners y HostBindings
+- Output Emitter Refs
+- Signals ViewChild
+- Signal ViewChildren
+- Servicios con señales
+- Computed Signals
+- Realizar cálculos y operaciones
+- Validaciones y consideraciones
+
+## OutputEmiterRef y Signal ViewChild
+
+Normalmente, para agregar un evento click a un botón realizabamos lo siguientes, en el componente **CalculatorComponent** agregabamos un método:
+
+```typescript
+public handleClick (key: string): void {
+    console.log({key});
+}
+```
+
+y luego lo podíamos usar de esta forma:
+
+```html
+<calculator-button (click)="handleClick('c')">C</calculator-button>
+<calculator-button (click)="handleClick('+/-')">+/-</calculator-button>
+```
+
+Angular recomienda un Event Emitter, primero, a nivel de ComponentButton agregamos una **output**
+
+```typescript
+public onClick = output<string>();
+```
+
+Y además agregaremos una función para manejar el click
+
+```typescript
+public handleClick() {
+    this.onClick.emit(this.contentValue()?.nativeElement.innerText || '');
+}
+```
+
+`this.contentValue()?.nativeElement.innerText` captura el texto del botón.
+
+
+A continuación actualizamos nuestro botón para tener una referencia `#button` y para llamar la función `handleClick`
+
+```html
+<button
+    #button
+    [class.is-command]="isCommand()"
+    (click)="handleClick()">
+    <ng-content/>
+</button>
+```
+
+Hasta aca solo hemos definido que el botón emitirá un evento, y el parámetro enviado será el texto asociado al botón.
+
+Seguidamente debemos definir en el elemento padre, el código para escuchar el evento click. Definimos un método:
+
+```typescript
+export class CalculatorComponent {
+
+  public handleClick (key: string) {
+    console.log({key});
+  }
+}
+```
+
+y en su template
+
+```html
+<calculator-button (onClick)="handleClick($event)" >C</calculator-button>
+```
+
+"C" es el contentProjection que le mandamos al Componente Button
+Button, emite un evento con el valor de "C"
+"C" es capturado de regreso en el componente padre y su valor es pasado como un argumento
+Finalmente el argumento padre imprime en consola el texto del botón.
+
+
 
