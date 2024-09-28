@@ -21,7 +21,17 @@ export class CalculatorComponent {
   }
 
   public handleKeyboardEvent( event: KeyboardEvent ) {
-    this.handleClick(event.key);
-    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(event.key));
+
+    const equivalentKeys: Record<string, string> = {
+      'Enter': '=',
+      'Escape': 'C',
+      'Backspace': 'CE',
+      '/': '÷',
+    }
+
+    const key = equivalentKeys[event.key] || event.key;
+
+    this.handleClick(key);
+    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(key));
   }
 }

@@ -1095,3 +1095,25 @@ El Componente Padre recorre cada botón y llama a su método `Button.keyboardPre
 La señal, en el **CalculatorButtonComponent** se enciende por 100 ms, tiempo durante el cual aplica la clase **.is-pressed**
 
 Esto genera el efecto mismo que cuando se presiona el botón con el Mouse.
+
+
+## Teclase Equivalentes
+
+Podemos asignar cierta teclas a ciertos botones, por ejemplo al presionar ESC en el teclado, podemos asignarlo al 'C' el cual limpia la operación actual, lo mismo podemos hacer con el ENTER para realizar el cálculo actual. Para ello, en nuestro componente padre **CalculatorComponent** generamos una tabla de equivalencias de la siguiente forma:
+
+```typescript
+public handleKeyboardEvent( event: KeyboardEvent ) {
+
+    const equivalentKeys: Record<string, string> = {
+      'Enter': '=',
+      'Escape': 'C',
+      'Backspace': 'CE',
+      '/': '÷',
+    }
+
+    const key = equivalentKeys[event.key] || event.key;
+
+    this.handleClick(key);
+    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(key));
+  }
+```

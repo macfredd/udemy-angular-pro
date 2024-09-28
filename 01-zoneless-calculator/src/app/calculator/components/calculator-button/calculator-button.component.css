@@ -7,5 +7,5 @@ button {
 }
 
 .is-pressed{
-    @apply bg-indigo-800 bg-opacity-20 text-opacity-100
+    @apply bg-blue-950
 }
