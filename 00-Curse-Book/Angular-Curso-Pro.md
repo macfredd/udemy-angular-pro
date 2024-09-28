@@ -960,10 +960,138 @@ y en su template
 <calculator-button (onClick)="handleClick($event)" >C</calculator-button>
 ```
 
-"C" es el contentProjection que le mandamos al Componente Button
-Button, emite un evento con el valor de "C"
-"C" es capturado de regreso en el componente padre y su valor es pasado como un argumento
-Finalmente el argumento padre imprime en consola el texto del botón.
+- "C" es el contentProjection que le mandamos al Componente Button
+
+- Button, emite un evento con el valor de "C"
+
+- "C" es capturado de regreso en el componente padre y su valor es pasado como un argumento
+
+- Finalmente el argumento padre imprime en consola el texto del botón.
 
 
+## Capturar eventos del teclado
 
+Para capturar eventos del teclado, hay una forma que consiste en utilizar el **@HostListener()**
+
+```typescript
+export class CalculatorComponent {
+
+  public handleClick (key: string) {
+    console.log({key});
+  }
+
+  @HostListener('document:keyup', ['$event'])
+  public handleKeyboardEvent( event: KeyboardEvent ) {
+    this.handleClick(event.key);
+  }
+}
+```
+
+`@HostListener('document:keyup', ['$event'])` escucha el evento keyUp y lo dirige al método **handleKeyboardEvent**
+
+Si bien esta forma funciona, no es la recomendada por Angular ya que **@HostListener** se mantiene por retro-compatibilidad, pero podría ser eliminado en un futuro.
+
+En su lugar se recomienda el uso del **@host**, tal como se muestra a continuación:
+
+
+```typescript
+@Component({
+  host: {
+    '(document:keyup)': 'handleKeyboardEvent($event)'
+  }
+})
+export class CalculatorComponent {
+
+  public handleClick (key: string) {
+    console.log({key});
+  }
+
+  public handleKeyboardEvent( event: KeyboardEvent ) {
+    this.handleClick(event.key);
+  }
+}
+```
+
+## Mostrar botón seleccionado
+
+Cuando usamos el teclado, queremos mostrar en pantalla el botón presionado, esto, actualmente funciona con el click, se aplica una clase diferente para mostrar un color diferente en el botón al que se hace click. Para lograr el mismo efecto usamos lo siguiente:
+
+En el CSS del **CalculatorButtonComponent** creamos una clase
+
+```css
+.is-pressed{
+    @apply bg-indigo-800 bg-opacity-20 text-opacity-100
+}
+```
+
+Creamos una señal en el **CalculatorButtonComponent**
+
+```typescript
+public isPressed = signal(false);
+```
+
+Y en el template aplicamos el cambio:
+
+```html
+<button
+    #button
+    [class.is-command]="isCommand()"
+    [class.is-pressed]="isPressed()"
+    (click)="handleClick()">
+    <ng-content/>
+</button>
+```
+
+Hasta ahora creamos una clase CSS y una señal, al ser TRUE, aplicará la clase.
+
+Ahora debemos agregar a nuesotr **CalculatorButtonComponent** un método que cambie la señal, siempre y cuando el valor del botón (Texto) sea el mismo del KEY presionado, esto lo logramos con el siguiente método:
+
+```typescript
+public keyboardPressedStyle(key: string) {
+    if (this.contentValue()?.nativeElement.innerText === key) {
+      this.isPressed.set(true);
+      setTimeout(() => this.isPressed.set(false), 100);
+    }
+  }
+```
+
+Notar que hemos agregado un delay de 100 ms para poder mostrar el efecto requerido.
+
+
+Ahora necesitamos que el componente padre, el cual opera nuestro método: **handleKeyboardEvent**, logre comunicarse con el componente hijo (CalculatorComponent) para poder acceder al **keyboardPressedStyle**
+
+En el componente padre **CalculatorComponent** agregamos otra señal:
+
+```typescript
+public calculatorButtons = viewChildren(CalculatorButtonComponent);
+```
+
+**viewChildren** verifica los componentes hijos, en este caso especificamente los **CalculatorButtonComponent**
+
+Aca obtendremos entonces un arreglo de **CalculatorButtonComponent**
+
+Finalmente dentro del mismo **CalculatorComponent** en el método **handleKeyboardEvent**, luego de llamar la función que hará los cálculos, hacemos esta llamada:
+
+```typescript
+public handleKeyboardEvent( event: KeyboardEvent ) {
+    this.handleClick(event.key);
+    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(event.key));
+  }
+```
+
+
+`this.calculatorButtons().forEach(button => button.keyboardPressedStyle(event.key));` esto recorre todos los elementos hijos de tipo **CalculatorButtonComponent**, ejecuta el **keyboardPressedStyle** con el KEY, o tecla presionado, de modo que solo aquel botón que tiene el texto igual al key presionado será __iluminado__ con la glase .is-Pressed
+
+En resumen:
+
+El Componente Padre captura el keyPress por medio del `host: {'(document:keyup)': 'handleKeyboardEven($event)'}`
+
+El Componente Padre tiene un arreglo de todos los componente hijos de tipo **CalculatorButtonComponent**.
+
+El **CalculatorButtonComponent** tiene una señal, la cual se enciende si el texto del keyboard presionado es igual al del botón
+
+El Componente Padre recorre cada botón y llama a su método `Button.keyboardPressedStyle(event.key)`
+
+La señal, en el **CalculatorButtonComponent** se enciende por 100 ms, tiempo durante el cual aplica la clase **.is-pressed**
+
+Esto genera el efecto mismo que cuando se presiona el botón con el Mouse.

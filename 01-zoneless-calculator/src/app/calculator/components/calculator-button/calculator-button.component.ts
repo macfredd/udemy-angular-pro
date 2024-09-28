@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, input, output, viewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, input, output, signal, viewChild, ViewEncapsulation } from '@angular/core';
 
 @Component({
   selector: 'calculator-button',
@@ -13,6 +13,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, input, out
   encapsulation: ViewEncapsulation.None,
 })
 export class CalculatorButtonComponent {
+
+  public isPressed = signal(false);
 
   public onClick = output<string>();
 
@@ -38,5 +40,12 @@ export class CalculatorButtonComponent {
 
   public handleClick() {
     this.onClick.emit(this.contentValue()?.nativeElement.innerText || '');
+  }
+
+  public keyboardPressedStyle(key: string) {
+    if (this.contentValue()?.nativeElement.innerText === key) {
+      this.isPressed.set(true);
+      setTimeout(() => this.isPressed.set(false), 100);
+    }
   }
 }
