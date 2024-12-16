@@ -9,6 +9,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, input, out
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'border-r border-b border-indigo-400',
+    '[class.w-2/4]': 'isDoubleSize()',
+    '[class.w-1/4]': '!isDoubleSize()',
   },
   encapsulation: ViewEncapsulation.None,
 })
@@ -33,10 +35,6 @@ export class CalculatorButtonComponent {
       transform: (value: string) => typeof value === 'string' ? value === '' : value,
     }
   );
-
-  @HostBinding('class') get DobleSizeStyle() {
-    return this.isDoubleSize() ? 'w-2/4' : 'w-1/4';
-  }
 
   public handleClick() {
     this.onClick.emit(this.contentValue()?.nativeElement.innerText || '');

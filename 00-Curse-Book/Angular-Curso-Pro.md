@@ -880,6 +880,27 @@ y luego en el @HostBinding definir una de ellas
 
 Con esto evitamos el conflicto entre las clases w-1/2 y w-2/4
 
+** NOTA ** Posteriormente se eliminó el **@HostBinding('class')** ya que en las nuevas versiones de Angular esto sigue siendo permitido, pero lo ideal es manejar este tipo de configuraciones en el host, de modo que se elimina el __HostBinding__ y usamos:
+
+```typescript
+host: {
+    class: 'border-r border-b border-indigo-400',
+    '[class.w-2/4]': 'isDoubleSize()',
+    '[class.w-1/4]': '!isDoubleSize()',
+  },
+```
+**isDoubleSize** sigue funcionando igual:
+
+```typescript
+public isDoubleSize = input(
+    false, // default value
+    {
+      transform: (value: string) => typeof value === 'string' ? value === '' : value,
+    }
+  );
+```
+
+
 <div style="page-break-after: always;"></div>
 
 # Nueva Sección: Señales, comportamiento y lógica
@@ -1097,7 +1118,7 @@ La señal, en el **CalculatorButtonComponent** se enciende por 100 ms, tiempo du
 Esto genera el efecto mismo que cuando se presiona el botón con el Mouse.
 
 
-## Teclase Equivalentes
+## Teclas Equivalentes
 
 Podemos asignar cierta teclas a ciertos botones, por ejemplo al presionar ESC en el teclado, podemos asignarlo al 'C' el cual limpia la operación actual, lo mismo podemos hacer con el ENTER para realizar el cálculo actual. Para ello, en nuestro componente padre **CalculatorComponent** generamos una tabla de equivalencias de la siguiente forma:
 
