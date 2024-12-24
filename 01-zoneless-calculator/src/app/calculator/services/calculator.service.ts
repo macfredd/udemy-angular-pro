@@ -105,7 +105,6 @@ export class CalculatorService {
     const expression = this.subResultText() + this.lastOperator() + this.resultText();
     const result = parser.parse(expression).evaluate();
 
-    console.log(expression, result);
     this.resultText.set(result.toString());
     this.subResultText.set('0');
     this.lastOperator.set('+');

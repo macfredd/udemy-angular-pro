@@ -1308,3 +1308,69 @@ export class CalculatorService {
 }
 ```
 
+# Nueva Sección: Test para el Zoneless Calculator:
+
+## ¿Qué veremos en esta sección?
+
+- Introducción a las pruebas
+  - AAA
+  - Unitarias, integración, E2E
+- Karma - Jasmine
+- Testing en Zoneless apps
+- Pruebas generales sobre HTML
+- Pruebas de componentes
+- Espías
+- Mocks
+  - Mock service implementation
+- Done Function
+- Pruebas en señales
+- Simular document events
+  - Global KeyPress
+
+## Instalar Karma - Jasmine
+
+La instalación actual de Angular, provee Karma - Jamine
+
+```json
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+```
+
+Solo debemo modificar algunos scripts,
+
+```json
+"test": "ng test --no-watch --no-progress --browsers=ChromeHeadless"
+```
+
+Esto evita que se abra el browser, los test se ejecutan en línea de comandos:
+
+Instalamos el Zone.js
+
+```bash
+$ npm install zone.js
+```
+
+Agregamos esto al **angular.json**
+
+"scripts": [
+  "node_modules/zone.js/fesm2015/zone.js"
+]
+
+y ejecutamos en línea de comandos:
+
+```bash
+> zoneless-calculator@0.0.0 test
+> ng test --no-watch --no-progress --browsers=ChromeHeadless
+
+24 12 2024 10:39:02.240:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+24 12 2024 10:39:02.241:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+24 12 2024 10:39:02.243:INFO [launcher]: Starting browser ChromeHeadless
+24 12 2024 10:39:02.437:INFO [Chrome Headless 129.0.0.0 (Linux x86_64)]: Connected on socket wDQ8wP3v1zvME7hWAAAB with id 35723469
+Chrome Headless 129.0.0.0 (Linux x86_64): Executed 5 of 5 SUCCESS (0.076 secs / 0.067 secs)
+TOTAL: 5 SUCCESS
+
+```
