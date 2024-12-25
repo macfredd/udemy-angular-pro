@@ -1360,6 +1360,17 @@ Agregamos esto al **angular.json**
   "node_modules/zone.js/fesm2015/zone.js"
 ]
 
+o bien agregamos solamente esto en el mismo archivo:
+
+```json
+"test": {
+  "options": {
+    "polyfills": [
+      "zone.js",
+      "zone.js/testing"
+    ],
+```
+
 y ejecutamos en línea de comandos:
 
 ```bash
@@ -1374,3 +1385,73 @@ Chrome Headless 129.0.0.0 (Linux x86_64): Executed 5 of 5 SUCCESS (0.076 secs / 
 TOTAL: 5 SUCCESS
 
 ```
+
+
+## Mocking
+
+En el **CalculatorButtonComponent** tenemos este método:
+
+```typescript
+public keyboardPressedStyle(key: string) {
+    if (this.contentValue()?.nativeElement.innerText === key) {
+      this.isPressed.set(true);
+      setTimeout(() => this.isPressed.set(false), 100);
+    }
+  }
+```
+Primero, debemos analizar que es el **contentValue**:
+
+```typescript
+public contentValue = viewChild<ElementRef<HTMLButtonElement>>('button');
+```
+
+**contentValue** busca todos los elementos tipo **button** en el componente hijo, en el template del **CalculatorButtonComponent** tenemos esto:
+
+```html
+<button
+    #button
+    [class.is-command]="isCommand()"
+    [class.is-pressed]="isPressed()"
+    (click)="handleClick()">
+    <ng-content/>
+</button>
+```
+
+Por lo tanto para probar el método, debemos instanciar el **contentValue**
+
+
+```typescript
+// Mock the contentValue viewChild
+    const buttonElement = document.createElement('button');
+    buttonElement.innerText = '1';
+    component.contentValue = signal (new ElementRef(buttonElement));
+```
+
+<aside class="nota-informativa">
+  <p>
+  En Angular, cuando utilizas viewChild de la nueva API reactiva, se asume que el valor referenciado es dinámico y puede cambiar. Para garantizar esta reactividad, Angular devuelve un Signal
+  </p>
+</aside>
+
+Con este codigo ya podemos escribir el test
+
+```typescript
+it('should set isPressed to true and then false when keyboardPressedStyle is called with matching key', (done) => {
+    expect(component.isPressed()).toBe(false);
+    component.keyboardPressedStyle('1');
+    expect(component.isPressed()).toBe(true);
+
+    // Wait for the timeout to check if it resets to false
+    setTimeout(() => {
+      expect(component.isPressed()).toBe(false);
+      done();
+    }, 100);
+  });
+```
+
+El setTimeout del test lo usamos porque nuestro componente hace lo siguiente:
+
+```typescript
+   setTimeout(() => this.isPressed.set(false), 100);
+```
+

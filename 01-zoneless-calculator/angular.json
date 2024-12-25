@@ -28,9 +28,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [
-              "node_modules/zone.js/fesm2015/zone.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -75,6 +73,8 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "polyfills": [
+              "zone.js",
+              "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
@@ -86,9 +86,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [
-              "node_modules/zone.js/fesm2015/zone.js"
-            ]
+            "scripts": []
           }
         }
       }
