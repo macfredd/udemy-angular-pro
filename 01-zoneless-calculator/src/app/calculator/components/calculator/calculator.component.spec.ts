@@ -52,4 +52,16 @@ describe('CalculatorComponent', () => {
     component.handleKeyboardEvent(event);
     expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
   });
+
+  it('should handle keyboard event with Enter key', () => {
+    const event = new KeyboardEvent('keyup', { key: 'Enter' });
+    component.handleKeyboardEvent(event);
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('=');
+  });
+
+  it('should handle keyboard event with Escape key', () => {
+    const event = new KeyboardEvent('keyup', { key: 'Escape' });
+    component.handleKeyboardEvent(event);
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('C');
+  });
 });
