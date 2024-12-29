@@ -1429,7 +1429,7 @@ Por lo tanto para probar el método, debemos instanciar el **contentValue**
 
 <aside class="nota-informativa">
   <p>
-  En Angular, cuando utilizas viewChild de la nueva API reactiva, se asume que el valor referenciado es dinámico y puede cambiar. Para garantizar esta reactividad, Angular devuelve un Signal
+  En Angular, cuando se utiliza el viewChild de la nueva API reactiva, se asume que el valor referenciado es dinámico y puede cambiar. Para garantizar esta reactividad, Angular devuelve un Signal
   </p>
 </aside>
 
@@ -1449,9 +1449,160 @@ it('should set isPressed to true and then false when keyboardPressedStyle is cal
   });
 ```
 
-El setTimeout del test lo usamos porque nuestro componente hace lo siguiente:
+<aside class="nota-importante">
+<p>Debemos usar <strong>done</strong> en este test porque incluye una operación asíncrona: el setTimeout.
+</p>
+</aside>
+
+**¿Qué hace done?**
+
+**done** es una función de notificación proporcionada por Jasmine que indica que una prueba asíncrona ha finalizado.
+
+Sin **done**, __Jasmine__ no sabe que debe esperar el final del temporizador y finalizará la prueba antes de que se ejecute el código dentro de setTimeout. Esto puede llevar a resultados inconsistentes o fallos inesperados.
+
+Debemos llamar explícitamente la función **done();** para indicar a Jasmine que la prueba ha terminado.
+
+Y el setTimeout del test lo usamos porque nuestro componente hace lo siguiente:
 
 ```typescript
    setTimeout(() => this.isPressed.set(false), 100);
 ```
 
+Es decir, luego de 100 ms, establece el isPressed a false, para dar la impresión visual (clases css) de que el botón ha sido presionado.
+
+## spyOn
+
+En el **CalculatorButton** tenemos este **output**
+
+```typescript
+public onClick = output<string>();
+```
+
+Este se emite con el método:
+
+```typescript
+public handleClick() {
+  this.onClick.emit(this.contentValue()?.nativeElement.innerText || '');
+}
+```
+
+El cual, es llamado desde el view cuando se presiona click sobre el botón:
+
+```html
+(click)="handleClick()
+```
+
+Para probar esto, podemos llamar directamente el **handleClick** en nuestra prueba, pero debemos evaluar que el **onClick.emit** al menos se llame una vez.
+
+```typescript
+it('should handle click event', () => {
+    spyOn(component.onClick, 'emit');
+    component.handleClick();
+    expect(component.onClick.emit).toHaveBeenCalledWith('1');
+  });
+```
+
+**spyOn** es una función proporcionada por Jasmine. Se utiliza para interceptar llamadas a un método o propiedad de un objeto, sin modificar el comportamiento original (a menos que elijas modificarlo explícitamente).
+
+El "espía" recolecta información sobre:
+
+- Cuántas veces se llamó al método.
+- Con qué argumentos se llamó.
+- Qué retornó (si corresponde).
+
+Si se omite **spyOn**, la prueba intentará evaluar la función original, y como esta no es un objeto espía, fallará porque:
+
+- emit no tiene los métodos que ofrece Jasmine para verificar interacciones (toHaveBeenCalled, toHaveBeenCalledWith, etc.).
+- En su lugar, sigue siendo una función nativa sin capacidades de registro.
+
+El error que veríamos sería:
+
+```typescript
+Error: <toHaveBeenCalledWith> : Expected a spy, but got Function.
+Usage: expect(<spyObj>).toHaveBeenCalledWith(...arguments)
+```
+
+
+## Mock Services
+
+En las pruebas de un componente, es ideal utilizar un mock del servicio en lugar del servicio real porque las responsabilidades de ambos deben mantenerse separadas. El componente debe probarse en aislamiento, evaluando su comportamiento en función de datos o métodos proporcionados por el mock. Esto asegura Independencia de pruebas, Evitar dependencias externas:, Aislamiento del código.
+
+Esto refuerza el principio de pruebas unitarias, que busca evaluar cada unidad de código en un entorno controlado y predecible.
+
+El **CalculatorComponent** utiliza el **calculatorService**
+
+```typescript
+private calculatorService = inject(CalculatorService);
+```
+
+Para iniciar, en nuestro test necesitamos Simular (Mock) el servicio, y lo haremos con la implementación de una clase, dentro del mismo test.
+
+```typescript
+class CalculatorServiceMock {
+  public resultText = jasmine.createSpy('resultText').and.returnValue('100');
+  public subResultText = jasmine.createSpy('subResultText').and.returnValue('0 ');
+  public lastOperator = jasmine.createSpy('lastOperator').and.returnValue('+');
+  public constructNumber = jasmine.createSpy('constructNumber');
+}
+```
+
+Luego necesitamos declarar una variable global
+
+```typescript
+let calculatorServiceMock: CalculatorServiceMock;
+```
+
+Posteriormente en la sección de los **Providers** del **configureTestingModule** debemos indicar que el **CalculatorService** utilie nuestro Mock.
+
+```typescript
+providers: [
+  {
+    provide: CalculatorService, useClass: CalculatorServiceMock
+  }
+  ]
+```
+
+Luego en el **beforeEach** necesitamos inicializar nuestro mock
+
+```typescript
+    calculatorServiceMock = TestBed.inject(CalculatorService) as unknown as CalculatorServiceMock;
+```
+
+Finalmente podemos probar nuestros métodos:
+
+```typescript
+it('should handle click', () => {
+    component.handleClick('1');
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
+  });
+```
+
+## Keyboard Events
+
+Para probar el siguiente método, necesitamos enviar un **KeyboardEvent** 
+
+```typescript
+public handleKeyboardEvent( event: KeyboardEvent ) {
+
+    const equivalentKeys: Record<string, string> = {
+      'Enter': '=',
+      'Escape': 'C',
+      'Backspace': 'CE',
+    }
+
+    const key = equivalentKeys[event.key] || event.key;
+
+    this.handleClick(key);
+    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(key));
+  }
+```
+
+Ya disponemos del Mock del servicio, por lo tanto solamente creamos un evento y verificamos la llamada al servicio
+
+```typescript
+it('should handle keyboard event', () => {
+    const event = new KeyboardEvent('keyup', { key: '1' });
+    component.handleKeyboardEvent(event);
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
+  });
+```

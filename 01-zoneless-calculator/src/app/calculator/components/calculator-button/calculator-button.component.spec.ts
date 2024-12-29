@@ -21,8 +21,6 @@ describe('CalculatorButtonComponent', () => {
     buttonElement.innerText = '1';
     component.contentValue = signal (new ElementRef(buttonElement));
 
-
-
     fixture.detectChanges();
   });
 
