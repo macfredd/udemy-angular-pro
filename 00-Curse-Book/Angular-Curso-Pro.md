@@ -1659,3 +1659,54 @@ En el archivo **./src/styles.css** agregamos:
 @tailwind components;
 @tailwind utilities;
 ```
+
+## Pages
+
+Vamos a crear algunas Paginas, que son los contenedores de nuestros componentes.
+
+
+```bash
+$ ng g c pages/aboutPage
+$ ng g c pages/pricingPage
+$ ng g c pages/contactPage
+```
+
+Creamos los shared
+
+```bash
+$ ng g c shared/componets/navbar
+```
+
+Agregamos contenido a nuestras páginas y creamos un navBar para navegar por el sitio
+
+```html
+<ul>
+  <li><a routerLink="/" href="#">Home</a></li>
+  <li><a routerLink="/about" href="#">About</a></li>
+  <li><a routerLink="/pricing" href="#">Pricing</a></li>
+  <li><a routerLink="/contact" href="#">Contact</a></li>
+</ul>
+```
+
+Creamos nuestras rutas:
+
+```typescript
+export const routes: Routes = [
+    {
+        path: 'about',
+        loadComponent: () => import('./pages/about-page/about-page.component')
+    },
+    {
+        path: 'pricing',
+        loadComponent: () => import('./pages/pricing-page/pricing-page.component')
+    },
+    {
+        path: 'contact',
+        loadComponent: () => import('./pages/contact-page/contact-page.component')
+    },
+];
+```
+
+Esto genera una app con una barra de navegación y tres páginas.
+
+
