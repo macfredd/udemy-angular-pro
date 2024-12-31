@@ -1138,3 +1138,524 @@ public handleKeyboardEvent( event: KeyboardEvent ) {
     this.calculatorButtons().forEach(button => button.keyboardPressedStyle(key));
   }
 ```
+
+## Nuevo Servicio para Calculos
+
+```bash
+$ ng g service /calculator/services/calculator
+CREATE src/app/calculator/services/calculator.service.spec.ts (377 bytes)
+CREATE src/app/calculator/services/calculator.service.ts (139 bytes)
+```
+
+Agregamos las señales básicas
+
+```typescript
+import { Injectable, signal } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CalculatorService {
+
+  public resultText = signal('0');
+  public subResultText = signal('0');
+  public lastOperator = signal('+');
+
+}
+```
+
+Injectamos el servicio en el CalculatorComponent y a la vez creamos 3 señales computadas para cada una de las señales dentro de nuestro servicio 
+
+```typescript
+  private calculatorService = inject(CalculatorService);
+  public resultText = computed(() => this.calculatorService.resultText());
+  public subResultText = computed(() => this.calculatorService.subResultText());
+  public lastOperator = computed(() => this.calculatorService.lastOperator());
+
+```
+
+**resultText** almacena el resultado de las operaciones
+**subResultText** almacena el resultado anterior más la próxima operación
+**lastOperator** almacena el último operador digitado.
+
+Y luego usamos estas señales en el template del CalculatorComponent.
+
+```html
+@if ( subResultText() !== '0') {
+  <span class="text-4xl">{{ subResultText() }} {{ lastOperator() }}</span>
+  <br>
+}
+<span>
+{{ resultText() }}
+</span>
+```
+
+El código completo del servicio:
+
+```typescript
+import { effect, Injectable, signal } from '@angular/core';
+import { Parser } from 'expr-eval';
+
+const numberRegex = /^\d+$/;
+const operatorRegex = /^[+\-*/\\/]$/;
+const specialOperators = ['C', '+/-', '%', '=', 'CE', '.'];
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CalculatorService {
+
+  public resultText = signal('0');
+  public subResultText = signal('0');
+  public lastOperator = signal('+');
+
+  public constructNumber(value : string) : void {
+
+    // Check if the value is a valid number, operator or special operator
+    if (!numberRegex.test(value) && !operatorRegex.test(value) && !specialOperators.includes(value)) {
+      return;
+    }
+
+    // Calculate the result
+    if (value === '=') {
+      this.calculateResult();
+      return;
+    }
+
+    // Reset the calculator
+    if (value === 'C') {
+      this.resultText.set('0');
+      this.subResultText.set('0');
+      this.lastOperator.set('+');
+      return;
+    }
+
+    // Remove the last character
+    if (value === 'CE') {
+      const result = this.resultText();
+      if (result.length === 1 ||
+        (result.length === 2 && result.charAt(0) === '-')) {
+        this.resultText.set('0');
+      } else {
+        this.resultText.set(result.slice(0, -1));
+      }
+      return;
+    }
+
+    // Change the sign of the number
+    if (value === '+/-') {
+      const result = this.resultText();
+      if (result.charAt(0) === '-') {
+        this.resultText.set(result.slice(1));
+      } else if (result !== '0') {
+        this.resultText.set('-' + result);
+      }
+      return;
+    }
+
+    // Calculate the percentage
+    if (value === '%') {
+      const result = this.resultText();
+      if (result !== '0') {
+        this.resultText.set((parseFloat(result) / 100).toString());
+      }
+      return;
+    }
+
+    // A Digit is pressed
+    if (numberRegex.test(value)) {
+      if (this.resultText() === '0') {
+        this.resultText.set(value);
+      } else {
+        this.resultText.set(this.resultText() + value);
+      }
+      return;
+    }
+
+    // An operator is pressed
+    if (operatorRegex.test(value)) {
+      this.calculateResult();
+
+      this.lastOperator.set(value);
+      this.subResultText.set(this.resultText());
+      this.resultText.set('0');
+      return
+    }
+
+    // Decimal point is pressed
+    if ( value === '.' ) {
+      if ( !this.resultText().includes('.') ) {
+        this.resultText.set(this.resultText() + '.');
+      }
+      return;
+    }
+
+  }
+
+  /**
+   * Calculate the result of the expression
+   */
+  private calculateResult() {
+    const parser = new Parser();
+    const expression = this.subResultText() + this.lastOperator() + this.resultText();
+    const result = parser.parse(expression).evaluate();
+
+    console.log(expression, result);
+    this.resultText.set(result.toString());
+    this.subResultText.set('0');
+    this.lastOperator.set('+');
+  }
+}
+```
+
+# Nueva Sección: Test para el Zoneless Calculator:
+
+## ¿Qué veremos en esta sección?
+
+- Introducción a las pruebas
+  - AAA
+  - Unitarias, integración, E2E
+- Karma - Jasmine
+- Testing en Zoneless apps
+- Pruebas generales sobre HTML
+- Pruebas de componentes
+- Espías
+- Mocks
+  - Mock service implementation
+- Done Function
+- Pruebas en señales
+- Simular document events
+  - Global KeyPress
+
+## Instalar Karma - Jasmine
+
+La instalación actual de Angular, provee Karma - Jamine
+
+```json
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+```
+
+Solo debemo modificar algunos scripts,
+
+```json
+"test": "ng test --no-watch --no-progress --browsers=ChromeHeadless"
+```
+
+Esto evita que se abra el browser, los test se ejecutan en línea de comandos:
+
+Instalamos el Zone.js
+
+```bash
+$ npm install zone.js
+```
+
+Agregamos esto al **angular.json**
+
+"scripts": [
+  "node_modules/zone.js/fesm2015/zone.js"
+]
+
+o bien agregamos solamente esto en el mismo archivo:
+
+```json
+"test": {
+  "options": {
+    "polyfills": [
+      "zone.js",
+      "zone.js/testing"
+    ],
+```
+
+y ejecutamos en línea de comandos:
+
+```bash
+> zoneless-calculator@0.0.0 test
+> ng test --no-watch --no-progress --browsers=ChromeHeadless
+
+24 12 2024 10:39:02.240:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+24 12 2024 10:39:02.241:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+24 12 2024 10:39:02.243:INFO [launcher]: Starting browser ChromeHeadless
+24 12 2024 10:39:02.437:INFO [Chrome Headless 129.0.0.0 (Linux x86_64)]: Connected on socket wDQ8wP3v1zvME7hWAAAB with id 35723469
+Chrome Headless 129.0.0.0 (Linux x86_64): Executed 5 of 5 SUCCESS (0.076 secs / 0.067 secs)
+TOTAL: 5 SUCCESS
+
+```
+
+
+## Mocking
+
+En el **CalculatorButtonComponent** tenemos este método:
+
+```typescript
+public keyboardPressedStyle(key: string) {
+    if (this.contentValue()?.nativeElement.innerText === key) {
+      this.isPressed.set(true);
+      setTimeout(() => this.isPressed.set(false), 100);
+    }
+  }
+```
+Primero, debemos analizar que es el **contentValue**:
+
+```typescript
+public contentValue = viewChild<ElementRef<HTMLButtonElement>>('button');
+```
+
+**contentValue** busca todos los elementos tipo **button** en el componente hijo, en el template del **CalculatorButtonComponent** tenemos esto:
+
+```html
+<button
+    #button
+    [class.is-command]="isCommand()"
+    [class.is-pressed]="isPressed()"
+    (click)="handleClick()">
+    <ng-content/>
+</button>
+```
+
+Por lo tanto para probar el método, debemos instanciar el **contentValue**
+
+
+```typescript
+// Mock the contentValue viewChild
+    const buttonElement = document.createElement('button');
+    buttonElement.innerText = '1';
+    component.contentValue = signal (new ElementRef(buttonElement));
+```
+
+<aside class="nota-informativa">
+  <p>
+  En Angular, cuando se utiliza el viewChild de la nueva API reactiva, se asume que el valor referenciado es dinámico y puede cambiar. Para garantizar esta reactividad, Angular devuelve un Signal
+  </p>
+</aside>
+
+Con este codigo ya podemos escribir el test
+
+```typescript
+it('should set isPressed to true and then false when keyboardPressedStyle is called with matching key', (done) => {
+    expect(component.isPressed()).toBe(false);
+    component.keyboardPressedStyle('1');
+    expect(component.isPressed()).toBe(true);
+
+    // Wait for the timeout to check if it resets to false
+    setTimeout(() => {
+      expect(component.isPressed()).toBe(false);
+      done();
+    }, 100);
+  });
+```
+
+<aside class="nota-importante">
+<p>Debemos usar <strong>done</strong> en este test porque incluye una operación asíncrona: el setTimeout.
+</p>
+</aside>
+
+**¿Qué hace done?**
+
+**done** es una función de notificación proporcionada por Jasmine que indica que una prueba asíncrona ha finalizado.
+
+Sin **done**, __Jasmine__ no sabe que debe esperar el final del temporizador y finalizará la prueba antes de que se ejecute el código dentro de setTimeout. Esto puede llevar a resultados inconsistentes o fallos inesperados.
+
+Debemos llamar explícitamente la función **done();** para indicar a Jasmine que la prueba ha terminado.
+
+Y el setTimeout del test lo usamos porque nuestro componente hace lo siguiente:
+
+```typescript
+   setTimeout(() => this.isPressed.set(false), 100);
+```
+
+Es decir, luego de 100 ms, establece el isPressed a false, para dar la impresión visual (clases css) de que el botón ha sido presionado.
+
+## spyOn
+
+En el **CalculatorButton** tenemos este **output**
+
+```typescript
+public onClick = output<string>();
+```
+
+Este se emite con el método:
+
+```typescript
+public handleClick() {
+  this.onClick.emit(this.contentValue()?.nativeElement.innerText || '');
+}
+```
+
+El cual, es llamado desde el view cuando se presiona click sobre el botón:
+
+```html
+(click)="handleClick()
+```
+
+Para probar esto, podemos llamar directamente el **handleClick** en nuestra prueba, pero debemos evaluar que el **onClick.emit** al menos se llame una vez.
+
+```typescript
+it('should handle click event', () => {
+    spyOn(component.onClick, 'emit');
+    component.handleClick();
+    expect(component.onClick.emit).toHaveBeenCalledWith('1');
+  });
+```
+
+**spyOn** es una función proporcionada por Jasmine. Se utiliza para interceptar llamadas a un método o propiedad de un objeto, sin modificar el comportamiento original (a menos que elijas modificarlo explícitamente).
+
+El "espía" recolecta información sobre:
+
+- Cuántas veces se llamó al método.
+- Con qué argumentos se llamó.
+- Qué retornó (si corresponde).
+
+Si se omite **spyOn**, la prueba intentará evaluar la función original, y como esta no es un objeto espía, fallará porque:
+
+- emit no tiene los métodos que ofrece Jasmine para verificar interacciones (toHaveBeenCalled, toHaveBeenCalledWith, etc.).
+- En su lugar, sigue siendo una función nativa sin capacidades de registro.
+
+El error que veríamos sería:
+
+```typescript
+Error: <toHaveBeenCalledWith> : Expected a spy, but got Function.
+Usage: expect(<spyObj>).toHaveBeenCalledWith(...arguments)
+```
+
+
+## Mock Services
+
+En las pruebas de un componente, es ideal utilizar un mock del servicio en lugar del servicio real porque las responsabilidades de ambos deben mantenerse separadas. El componente debe probarse en aislamiento, evaluando su comportamiento en función de datos o métodos proporcionados por el mock. Esto asegura Independencia de pruebas, Evitar dependencias externas:, Aislamiento del código.
+
+Esto refuerza el principio de pruebas unitarias, que busca evaluar cada unidad de código en un entorno controlado y predecible.
+
+El **CalculatorComponent** utiliza el **calculatorService**
+
+```typescript
+private calculatorService = inject(CalculatorService);
+```
+
+Para iniciar, en nuestro test necesitamos Simular (Mock) el servicio, y lo haremos con la implementación de una clase, dentro del mismo test.
+
+```typescript
+class CalculatorServiceMock {
+  public resultText = jasmine.createSpy('resultText').and.returnValue('100');
+  public subResultText = jasmine.createSpy('subResultText').and.returnValue('0 ');
+  public lastOperator = jasmine.createSpy('lastOperator').and.returnValue('+');
+  public constructNumber = jasmine.createSpy('constructNumber');
+}
+```
+
+Luego necesitamos declarar una variable global
+
+```typescript
+let calculatorServiceMock: CalculatorServiceMock;
+```
+
+Posteriormente en la sección de los **Providers** del **configureTestingModule** debemos indicar que el **CalculatorService** utilie nuestro Mock.
+
+```typescript
+providers: [
+  {
+    provide: CalculatorService, useClass: CalculatorServiceMock
+  }
+  ]
+```
+
+Luego en el **beforeEach** necesitamos inicializar nuestro mock
+
+```typescript
+    calculatorServiceMock = TestBed.inject(CalculatorService) as unknown as CalculatorServiceMock;
+```
+
+Finalmente podemos probar nuestros métodos:
+
+```typescript
+it('should handle click', () => {
+    component.handleClick('1');
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
+  });
+```
+
+## Keyboard Events
+
+Para probar el siguiente método, necesitamos enviar un **KeyboardEvent** 
+
+```typescript
+public handleKeyboardEvent( event: KeyboardEvent ) {
+
+    const equivalentKeys: Record<string, string> = {
+      'Enter': '=',
+      'Escape': 'C',
+      'Backspace': 'CE',
+    }
+
+    const key = equivalentKeys[event.key] || event.key;
+
+    this.handleClick(key);
+    this.calculatorButtons().forEach(button => button.keyboardPressedStyle(key));
+  }
+```
+
+Ya disponemos del Mock del servicio, por lo tanto solamente creamos un evento y verificamos la llamada al servicio
+
+```typescript
+it('should handle keyboard event', () => {
+    const event = new KeyboardEvent('keyup', { key: '1' });
+    component.handleKeyboardEvent(event);
+    expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
+  });
+```
+
+<div style="page-break-after: always;"></div>
+
+# Nueva Sección: SSR, SSG, Hydration
+
+## ¿Qué veremos en esta sección?
+
+En esta sección dejaremos las bases de la generación de aplicaciones de Angular usando Server Side Rendering (SSR) y un poco de Static Site Generation (SSG).
+
+
+Puntualmente veremos:
+
+- SPA -> Server Side
+- Ejecutar código únicamente en el servidor y/o cliente
+- SEO metatags
+- Title
+- Despliegues
+- Consideraciones importantes en Angular SSR
+
+## Nueva APP
+
+```shell
+$ ng new zoneless-calculator
+```
+
+Durante la configuración del proyecto, el SSR lo dejamos en 'n', se hará la configuración manual.
+
+``` bash
+? Do you want to enable Server-Side Rendering (SSR) and Static Site Generation (SSG/Prerendering)? No
+```
+
+## Instalamos tailwind CSS
+[Guía de Instalación](https://tailwindcss.com/docs/guides/angular)
+
+```bash
+$ npm install -D tailwindcss postcss autoprefixer
+$ npx tailwindcss init
+```
+
+En el archivo **tailwind.config.js** agregamos:
+
+```json
+content: [
+    "./src/**/*.{html,ts}",
+  ],
+```
+
+En el archivo **./src/styles.css** agregamos:
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```

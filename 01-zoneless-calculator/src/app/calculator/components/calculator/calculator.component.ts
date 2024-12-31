@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, viewChildren } from '@angular/core';
 import { CalculatorButtonComponent } from '../calculator-button/calculator-button.component';
+import { CalculatorService } from '@/calculator/services/calculator.service';
 
 @Component({
   selector: 'calculator',
@@ -16,8 +17,14 @@ export class CalculatorComponent {
 
   public calculatorButtons = viewChildren(CalculatorButtonComponent);
 
+  private calculatorService = inject(CalculatorService);
+
+  public resultText = computed(() => this.calculatorService.resultText());
+  public subResultText = computed(() => this.calculatorService.subResultText());
+  public lastOperator = computed(() => this.calculatorService.lastOperator());
+
   public handleClick (key: string) {
-    console.log({key});
+    this.calculatorService.constructNumber(key);
   }
 
   public handleKeyboardEvent( event: KeyboardEvent ) {
@@ -26,7 +33,6 @@ export class CalculatorComponent {
       'Enter': '=',
       'Escape': 'C',
       'Backspace': 'CE',
-      '/': '÷',
     }
 
     const key = equivalentKeys[event.key] || event.key;
