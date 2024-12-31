@@ -1606,3 +1606,56 @@ it('should handle keyboard event', () => {
     expect(calculatorServiceMock.constructNumber).toHaveBeenCalledWith('1');
   });
 ```
+
+<div style="page-break-after: always;"></div>
+
+# Nueva Sección: SSR, SSG, Hydration
+
+## ¿Qué veremos en esta sección?
+
+En esta sección dejaremos las bases de la generación de aplicaciones de Angular usando Server Side Rendering (SSR) y un poco de Static Site Generation (SSG).
+
+
+Puntualmente veremos:
+
+- SPA -> Server Side
+- Ejecutar código únicamente en el servidor y/o cliente
+- SEO metatags
+- Title
+- Despliegues
+- Consideraciones importantes en Angular SSR
+
+## Nueva APP
+
+```shell
+$ ng new zoneless-calculator
+```
+
+Durante la configuración del proyecto, el SSR lo dejamos en 'n', se hará la configuración manual.
+
+``` bash
+? Do you want to enable Server-Side Rendering (SSR) and Static Site Generation (SSG/Prerendering)? No
+```
+
+## Instalamos tailwind CSS
+[Guía de Instalación](https://tailwindcss.com/docs/guides/angular)
+
+```bash
+$ npm install -D tailwindcss postcss autoprefixer
+$ npx tailwindcss init
+```
+
+En el archivo **tailwind.config.js** agregamos:
+
+```json
+content: [
+    "./src/**/*.{html,ts}",
+  ],
+```
+
+En el archivo **./src/styles.css** agregamos:
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
