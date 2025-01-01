@@ -1659,3 +1659,138 @@ En el archivo **./src/styles.css** agregamos:
 @tailwind components;
 @tailwind utilities;
 ```
+
+## Pages
+
+Vamos a crear algunas Paginas, que son los contenedores de nuestros componentes.
+
+
+```bash
+$ ng g c pages/aboutPage
+$ ng g c pages/pricingPage
+$ ng g c pages/contactPage
+```
+
+Creamos los shared
+
+```bash
+$ ng g c shared/componets/navbar
+```
+
+Agregamos contenido a nuestras páginas y creamos un navBar para navegar por el sitio
+
+```html
+<ul>
+  <li><a routerLink="/" href="#">Home</a></li>
+  <li><a routerLink="/about" href="#">About</a></li>
+  <li><a routerLink="/pricing" href="#">Pricing</a></li>
+  <li><a routerLink="/contact" href="#">Contact</a></li>
+</ul>
+```
+
+Creamos nuestras rutas:
+
+```typescript
+export const routes: Routes = [
+    {
+        path: 'about',
+        loadComponent: () => import('./pages/about-page/about-page.component')
+    },
+    {
+        path: 'pricing',
+        loadComponent: () => import('./pages/pricing-page/pricing-page.component')
+    },
+    {
+        path: 'contact',
+        loadComponent: () => import('./pages/contact-page/contact-page.component')
+    },
+];
+```
+
+Esto genera una app con una barra de navegación y tres páginas.
+
+## Habilitar el SSR
+
+
+Para habilitar el SSR en una app Nueva:
+
+```bash
+$ ng new --ssr
+```
+
+Para habilitarlo en una app Existente:
+
+```bash
+$ ng add @angular/ssr
+```
+
+Esto actualiza y agrega nuevos archivos en nuestro poryecto
+
+```bash
+$ git status
+On branch curso
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   02-food-ssr/angular.json
+	modified:   02-food-ssr/package-lock.json
+	modified:   02-food-ssr/package.json
+	modified:   02-food-ssr/src/app/app.config.ts
+	modified:   02-food-ssr/tsconfig.app.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	02-food-ssr/server.ts
+	02-food-ssr/src/app/app.config.server.ts
+	02-food-ssr/src/main.server.ts
+
+```
+
+
+**__Archivos modificados__**
+
+**angular.json:**
+Se actualiza para agregar configuraciones necesarias para SSR, como un nuevo "target" para construir la aplicación en el servidor (server).
+
+Se agregan configuraciones específicas para el servidor en la sección de proyectos, incluyendo entradas para main.server.ts y app.config.server.ts.
+
+**package-lock.json y package.json:**
+Se instalan nuevas dependencias relacionadas con Angular Universal, como:
+```bash
+@angular/platform-server
+@nguniversal/express-engine
+```
+
+Se actualizan los scripts de npm para incluir comandos relacionados con SSR:
+
+```bash
+npm run dev:ssr: Para ejecutar el servidor en modo desarrollo.
+npm run build:ssr: Para construir la aplicación para SSR.
+npm run serve:ssr: Para servir la aplicación SSR en producción.
+```
+
+**src/app/app.config.ts:**
+Se modifica para incluir configuraciones genéricas que funcionan tanto para el cliente como para el servidor.
+
+**tsconfig.app.json:**
+Se actualiza para incluir configuraciones necesarias para soportar SSR.
+Se ajusta el compilador para manejar archivos específicos del servidor.
+
+__**Nuevos archivos creados**__
+
+**server.ts:**
+Archivo principal del servidor.
+Contiene el código para iniciar un servidor Express que utiliza Angular Universal para renderizar la aplicación en el servidor.
+
+**Resumen del contenido:**
+Configura Express para servir contenido estático.
+Usa el módulo generado por Angular Universal para manejar rutas (AppServerModule).
+Escucha en un puerto especificado.
+
+**src/main.server.ts:**
+Punto de entrada para la aplicación en el servidor.
+Importa el módulo AppServerModule y lo configura para SSR.
+
+**src/app/app.config.server.ts:**
+Configuraciones específicas para la aplicación cuando se ejecuta en el servidor.
+Esto permite diferenciar entre configuraciones para cliente y servidor.
