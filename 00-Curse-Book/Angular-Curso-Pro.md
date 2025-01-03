@@ -1794,3 +1794,146 @@ Importa el módulo AppServerModule y lo configura para SSR.
 **src/app/app.config.server.ts:**
 Configuraciones específicas para la aplicación cuando se ejecuta en el servidor.
 Esto permite diferenciar entre configuraciones para cliente y servidor.
+
+
+## Server blundler
+
+Los archivos más importantes generador por el Bundle del lado del servidor son:
+
+| Nombre de Archivo         | Descripción                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| `server.mjs`             | Archivo principal del servidor que maneja las solicitudes y renderiza páginas. |
+| `main.server.mjs`        | Punto de entrada del servidor, inicializa `AppServerModule`.                |
+| `render-utils.server.mjs`| Funciones auxiliares para la renderización en el servidor.                  |
+| `polyfills.server.mjs`   | Polyfills para asegurar compatibilidad del entorno Node.js con APIs del navegador. |
+
+## Cambios en las páginas html
+
+Cuando habilitas Server-Side Rendering (SSR) en Angular, el servidor genera el HTML inicial antes de enviarlo al cliente. Esto contrasta con la forma por defecto de Angular, donde el navegador recibe un documento HTML casi vacío que depende del JavaScript para renderizar el contenido. Aquí tienes un análisis de los cambios a nivel de páginas HTML:
+
+**__HTML generado con Angular por defecto (sin SSR):__**
+
+Cuando Angular no usa SSR:
+
+- El servidor entrega un archivo HTML base (generalmente index.html) con:
+    - <head> con meta etiquetas y enlaces a estilos.
+    - Un <body> vacío o casi vacío, donde solo hay un <app-root>.
+    - Los scripts de JavaScript necesarios para iniciar la aplicación.
+
+Ejemplo:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Angular App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <app-root></app-root>
+  <script src="runtime.js"></script>
+  <script src="polyfills.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+```
+
+<aside class="nota-informativa">
+<p>
+El contenido dentro de <app-root> se renderiza dinámicamente en el cliente mediante JavaScript.
+</p>
+</aside>
+
+**_HTML generado con SSR habilitado:_**
+
+Con SSR, el servidor entrega un documento HTML completamente renderizado que incluye:
+
+-Todo el contenido inicial de la página.
+    - Estructura HTML, texto, imágenes, y estilos inyectados directamente dentro del <app-root>.
+    - Enlaces a los scripts de JavaScript necesarios para habilitar la interactividad del lado del cliente.
+
+Ejemplo de HTML generado por SSR:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Angular App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <app-root>
+    <div class="header">
+      <h1>Bienvenido a la Aplicación</h1>
+    </div>
+    <div class="content">
+      <p>Este es el contenido inicial de la página, renderizado en el servidor.</p>
+    </div>
+  </app-root>
+  <script src="runtime.js"></script>
+  <script src="polyfills.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+```
+
+En resumen:
+
+| Característica                       | Sin SSR                              | Con SSR                              |
+|--------------------------------------|---------------------------------------|---------------------------------------|
+| Contenido dentro de `<app-root>`    | Vacío; el contenido se genera en el cliente. | Completamente renderizado con el contenido inicial de la página. |
+| Metaetiquetas dinámicas             | No se generan dinámicamente; requieren JavaScript. | Generadas en el servidor para mejorar el SEO. |
+| Tiempos de carga inicial            | El usuario ve una pantalla en blanco hasta que el JavaScript carga y ejecuta. | El contenido es visible inmediatamente, antes de que el JavaScript cargue. |
+| Interacción del cliente             | La interactividad depende de que el JavaScript se cargue completamente. | La página es estática inicialmente y se "hidrata" después para añadir interactividad. |
+
+
+## Manejo de Etiquetas
+
+En Angular, el título del documento (el contenido de la etiqueta **title** en el **head**) al igual que el **meta** no cambia automáticamente al navegar entre páginas, incluso con SSR habilitado. Por defecto, el título suele ser estático, definido en el archivo index.html. Para ajustar dinámicamente el título según la página, se puede usar:
+
+Forma 1: El servicio Title de Angular.
+
+```typescript
+export default class AboutPageComponent implements OnInit {
+  private title = inject(Title);
+  private meta = inject(Meta);
+
+  ngOnInit(): void {
+    this.title.setTitle('About Us');
+    this.meta.updateTag({ name: 'description', content: 'Learn more about us on this page.' });
+  }
+}
+```
+
+Forma 2: en los routes
+
+```typescript
+export const routes: Routes = [
+    {
+        path: 'about',
+        loadComponent: () => import('./pages/about-page/about-page.component'),
+        title: 'About Us',
+    },
+    /*otras páginas aca*/
+];
+```
+
+En el caso del **meta** debemos inicializarlo en el componente:
+
+```typescript
+export default class AboutPageComponent implements OnInit {
+
+  private meta = inject(Meta);
+
+  ngOnInit(): void {
+    this.meta.updateTag({ name: 'description', content: 'Learn more about our company.' });
+  }
+```
+
+Esto genera:
+
+```html
+<meta name="description" content="Learn more about our company.">
+```

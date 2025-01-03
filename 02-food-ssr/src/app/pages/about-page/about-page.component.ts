@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -9,6 +10,11 @@ import { RouterLink } from '@angular/router';
   styleUrl: './about-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export default class AboutPageComponent {
+export default class AboutPageComponent implements OnInit {
 
+  private meta = inject(Meta);
+
+  ngOnInit(): void {
+    this.meta.updateTag({ name: 'description', content: 'Learn more about our company.' });
+  }
 }
