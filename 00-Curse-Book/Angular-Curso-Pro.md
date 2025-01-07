@@ -1984,3 +1984,18 @@ export class AppComponent {
 ```
 
 
+## Publicar en Netlify
+
+Dado que nuestro repositorio contiene varios proyectos en subCarpetas, debemos especificar estas configuraciones en netlify
+
+```
+Runtime: Angular
+Base directory: 02-food-ssr
+Package directory: Not set
+Build command: npm run build
+Publish directory: 02-food-ssr/dist/food-ssr/browser
+Functions directory: 02-food-ssr/netlify/functions
+```
+
+
+URL: https://udemy-angular-pro.netlify.app/
