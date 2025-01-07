@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
+/02-food-ssr/dist
 
 # Node
 /node_modules
