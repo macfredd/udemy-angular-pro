@@ -1937,3 +1937,50 @@ Esto genera:
 ```html
 <meta name="description" content="Learn more about our company.">
 ```
+## disponibilidad de document y otros objetos en SSR
+
+
+En aplicaciones con **SSR (Server-Side Rendering)**, el código de la aplicación Angular se ejecuta tanto en el servidor como en el cliente, aunque en contextos diferentes:
+
+**En el lado del servidor:**
+  Angular renderiza la aplicación como HTML estático inicial usando Node.js (o el entorno de ejecución definido por el SSR).
+
+  Objetos como **document**, **window**, o cualquier otra API del DOM no están disponibles porque __Node.js__ no tiene acceso al navegador.
+
+**En el lado del cliente:**
+  El navegador toma el control del HTML renderizado por el servidor y ejecuta el código del cliente.
+
+  En este entorno, los objetos del DOM como document y window están disponibles y funcionan normalmente.
+
+
+Si vamos a utilizar código JS en nuestro componente y este debe usar estos objetos debemos de verificar primero el entorno y si los ojectos están definidos, por ejemplo:
+
+```typescript
+if (typeof document !== 'undefined') {
+  console.log(document);
+}
+```
+
+o bien desde angular
+
+```typescript
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+    if (isPlatformBrowser(this.platformId)) {
+      // Solo se ejecutará en el navegador.
+      console.log(document);
+    }
+
+    if (isPlatformServer(this.platformId)) {
+      // Solo se ejecutará en el navegador.
+    }
+  }
+}
+```
+
+

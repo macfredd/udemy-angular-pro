@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/food-ssr",
+            "outputPath": "02-food-ssr/dist/food-ssr",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
