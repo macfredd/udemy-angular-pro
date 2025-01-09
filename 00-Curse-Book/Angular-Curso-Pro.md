@@ -1984,3 +1984,136 @@ export class AppComponent {
 ```
 
 
+## Publicar en Netlify
+
+Dado que nuestro repositorio contiene varios proyectos en subCarpetas, debemos especificar estas configuraciones en netlify
+
+```
+Runtime: Angular
+Base directory: 02-food-ssr
+Package directory: Not set
+Build command: npm run build
+Publish directory: 02-food-ssr/dist/food-ssr/browser
+Functions directory: 02-food-ssr/netlify/functions
+```
+
+
+URL: https://udemy-angular-pro.netlify.app/
+
+
+
+<div style="page-break-after: always;"></div>
+
+# Nueva Sección: SEO Tags Dinamicos:
+
+## ¿Qué veremos en esta sección?
+
+En esta sección trabajaremos creando páginas independientes que tengan la necesidad de hacer una petición HTTP antes de crear las etiquetas SEO.
+
+
+Puntualmente veremos:
+
+- SEO Tags
+- Petición HTTP que construye la metadata.
+- Enlaces que muestren metadata
+- Paginación híbrida
+- Despliegues
+
+
+Es una sección que tiene mucha información relacionada a cómo trabajar páginas indexables por SEO.
+
+## Api
+Api propuestas para continuar con el desarrollo de la APP
+
+https://www.themealdb.com/api.php
+
+
+## Crear componentes adicionales
+
+```bash
+$ ng g c pages/recipes
+```
+
+En el Template del nuevo componente tenemos:
+
+```html
+<h1 class="text-3xl">Recipe list</h1>
+<h2 class="text-xl">Current Page</h2>
+
+<hr class="my-2">
+
+<!-- TODO: Recipe List-->
+
+<!-- TODO: Recupe List skeleton-->
+
+<!-- TODO: Pagination Button-->
+```
+
+Agregamos los componentes adicionales:
+
+Antes agregamos algunos directorios, la idea es agrupar en **recipes** todos los componentes, servicios e interfaces relacionadas con las recetas de comida. Estos componentes serán integrados en la página correspondiente.
+
+```bash
+└── recipes
+    ├── components
+    ├── interfaces
+    └── services
+```
+
+```bash
+$ ng g c recipes/components/recipeList
+$ ng g c recipes/components/recipeCard
+```
+
+Creamos un template inicial para el recipeCard
+
+```html
+<div class="bg-blu500 h-64 bg-opacity-25 rounded-md flex flex-col p-4 items-center justify-center cursor-pointer">
+    <img src="https://www.themealdb.com/images/media/meals/ewcikl1614348364.jpg" alt="meals"
+    class="w-40 h-40 object-cover rounded-full">
+
+    <div class="text-center mt-2">
+        <h2 class="text-lg font-bold capitalize">
+            Portuguese prego with green piri-piri
+        </h2>
+    </div>
+</div>
+```
+
+de la misma forma creamos un template de ejemplo para el **RecipeListComponent**
+
+```html
+<div class="grid gap-3
+    grid-cols-1
+    sm:grid-cols-3
+    md:grid-cols-5">
+
+    @for (item of '1,2,3,4,5,6,7,8,9,10,11,12'.split(','); track $index) {
+        <recipe-card></recipe-card>
+    }
+    <!-- <div class="col-span-5 text-center border-white h-28 flex justify-center items-center">
+        There are no recipes to show.
+    </div> -->
+</div>
+```
+
+Y en la página **RecipesPageComponent** agregamos los componentes
+
+```html
+<h1 class="text-3xl">Recipe list</h1>
+<h2 class="text-xl">Current Page</h2>
+
+<hr class="my-2">
+
+<recipe-list></recipe-list>
+
+<hr class="my-2">
+<div class="flex justify-between">
+  <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</button>
+</div>
+```
+
+El resultado por el momento es:
+
+<img src="./imagenes/02-food-ssr-01.png" alt="Imagen" style="margin-right: 10px; width: 80%; height: auto; border: 1px solid black" />

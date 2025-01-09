@@ -16,4 +16,9 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/contact-page/contact-page.component'),
         title: 'Contact Us'
     },
+    {
+        path: 'recipes',
+        loadComponent: () => import('./pages/recipes-page/recipes-page.component'),
+        title: 'Recipes'
+    },
 ];
