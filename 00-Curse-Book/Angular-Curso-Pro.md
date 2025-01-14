@@ -2117,3 +2117,121 @@ Y en la página **RecipesPageComponent** agregamos los componentes
 El resultado por el momento es:
 
 <img src="./imagenes/02-food-ssr-01.png" alt="Imagen" style="margin-right: 10px; width: 80%; height: auto; border: 1px solid black" />
+
+## Skeleton
+
+En el pokemon list, vamos a crear un skeleton, una estructura que se carga previamente, antes de cargar los datos finales.
+
+De modo que cargamos el Skeleton tan pronto se carga la página, éste es vivible mientras obtenemos los datos reales de la página, y finalmente, dejamos caer los datos sobre el skeleton.
+
+Esto genera un efecto
+
+Podríamos crear este Skeleton directamente dentro del template del **RecipeListComponent** También podríamos crearlo como un Componente dentro del directorio **Shared** o bien podemos crearlo dentro de un directorio **UI** dentro de la página **RecipesPageComponent**
+
+Dado que este Skeleton es único para la lista de Recetas, vamos a crearlo dentro de un directorio UI dentro de la página **RecipesPageComponent**
+
+```bash
+$ ng g c pages/recipesPage/ui/recipeListSkeleton
+```
+
+El template:
+
+```html
+<div class="grid gap-3
+    grid-cols-1
+    sm:grid-cols-3
+    md:grid-cols-5">
+
+    @for (item of '1,2,3,4,5,6,7,8,9,10,11,12'.split(','); track $index) {
+        <div class="bg-blu500 h-64 bg-opacity-25 rounded-md flex flex-col p-4 items-center justify-center cursor-pointer">
+            <div class="bg-gray-300 animate-pulse w-40 h-40 object-cover rounded-full">
+            </div>
+
+            <div class="text-center mt-2 pt-4">
+                <div class="bg-gray-300 animate-pulse w-40 h-4 rounded-full">
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+```
+
+El template es una copia identica del RecipeList, unicamente establece los elementos HTML que luego serán reemplazado por el contenido final. Esto permite que antes de obtener respuesta de los datos finales, se renderice una estructura base (Esqueleto) sobre la cual, posteriormente se colocaran los datos finales.
+
+Para usar el componente, agregamos la lógica en el **RecipesPageComponent**
+
+```typescript
+export default class RecipesPageComponent implements OnInit {
+  public isLoading = signal(true);
+
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.isLoading.set(false);
+    },1000);
+  }
+}
+```
+
+Usamos un signal para controlar la visibilidad de uno de los dos componentest, luego en el template del mismo control:
+
+```html
+@if(isLoading()) {
+  <recipe-list-skeleton></recipe-list-skeleton>
+} @else {
+  <recipe-list></recipe-list>
+}
+```
+
+## Renderizado del lado del servidor
+
+El cambio anterior genera un efecto no deseado, si ejecutamos la app en modo cliente  `ng serve -o` vemos que todo funciona, el Skeleton se muestra por 1 segundo y luego se renderiza el contenido final. Pero al ejecutar la misma app en modo SSR, `npm run build && npm run serve:ssr:food-ssr` se muestran los dos componentes al inicio, y un segundo después se oculta el skeleton y permanece el recipe-list
+
+
+Esto ocurre debido a un desajuste entre el renderizado del servidor (SSR) y la posterior hidratación del cliente:
+
+**En el servidor**: Angular Universal renderizaba el componente con el estado inicial de isLoading como true, lo que mostraba el __recipe-list-skeleton__.
+
+**En el cliente**: Durante la hidratación, el cliente también inicializaba isLoading como true, causando que el skeleton se renderizara nuevamente antes de que el temporizador lo desactivara.
+
+Esto resultaba en el doble renderizado del __recipe-list-skeleton__: una vez desde el servidor y otra durante la hidratación en el cliente.
+
+Para solucionarlo vamos a incluir una nueva variable **isServer**
+
+```typescript
+export default class RecipesPageComponent {
+  public isLoading = signal(true);
+  public isServer = isPlatformServer(this.platformId);
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
+    if (!this.isServer) {
+      setTimeout(() => this.isLoading.set(false), 1000);
+    }
+  }
+}
+```
+
+Y en el template:
+
+```html
+@if(isLoading() || isServer) {
+  <recipe-list-skeleton></recipe-list-skeleton>
+} @else {
+  <recipe-list></recipe-list>
+}
+```
+
+La solución consistió en sincronizar correctamente el estado entre el servidor y el cliente, asegurando que:
+
+**Inicialización de isLoading adecuada:**
+  - En el servidor: isLoading se mantiene como true para que el servidor siempre muestre el skeleton.
+
+  - En el cliente: Se desactiva el isLoading solo después de que el cliente tome el control (con un setTimeout).
+
+**Condiciones del template:**
+
+  - Se usa isServer (basado en isPlatformServer) para que el skeleton solo se muestre en el servidor o mientras isLoading sea true en el cliente.
+
+  - El template maneja de forma explícita ambos estados (skeleton o recipe-list).

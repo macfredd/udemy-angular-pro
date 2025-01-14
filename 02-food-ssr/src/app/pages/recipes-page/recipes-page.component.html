@@ -3,10 +3,14 @@
 
 <hr class="my-2">
 
-<recipe-list></recipe-list>
+@if(isLoading() || isServer) {
+  <recipe-list-skeleton></recipe-list-skeleton>
+} @else {
+  <recipe-list></recipe-list>
+}
 
 <hr class="my-2">
 <div class="flex justify-between">
   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</button>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</button>
+  <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</button>
 </div>
