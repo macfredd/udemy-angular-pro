@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import RecipeCardComponent from "../recipe-card/recipe-card.component";
+import { MealResponse } from '../../interfaces/meals';
 
 @Component({
   selector: 'recipe-list',
@@ -10,5 +11,7 @@ import RecipeCardComponent from "../recipe-card/recipe-card.component";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export default class RecipeListComponent {
+
+  recipeList = input.required<MealResponse>();
 
 }
