@@ -6,7 +6,7 @@
 @if(isLoading() || isServer) {
   <recipe-list-skeleton></recipe-list-skeleton>
 } @else {
-  <recipe-list></recipe-list>
+  <recipe-list [recipeList]="recipesList()"></recipe-list>
 }
 
 <hr class="my-2">

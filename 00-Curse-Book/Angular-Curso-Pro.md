@@ -2235,3 +2235,181 @@ La solución consistió en sincronizar correctamente el estado entre el servidor
   - Se usa isServer (basado en isPlatformServer) para que el skeleton solo se muestre en el servidor o mientras isLoading sea true en el cliente.
 
   - El template maneja de forma explícita ambos estados (skeleton o recipe-list).
+
+
+  ## API Endpoint
+Utilizaremos los siguientes endPoint para obtener una lista de recetas por categoría:
+
+```
+  https://www.themealdb.com/api/json/v1/1/categories.php
+  https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood
+```
+
+Creamos un servicio
+
+```bash
+$ ng g s recipes/services/recipes
+```
+
+Primero creamos un par de interfaces
+
+```typescript
+export interface Meal {
+    strMeal:      string;
+    strMealThumb: string;
+    idMeal:       string;
+}
+
+export interface MealResponse {
+    meals: Meal[];
+}
+```
+
+y luego creamos el servicio
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class RecipesService {
+
+  private httpClient = inject(HttpClient);
+
+  /** Varialbes to implement a pagination on client side
+   * Food API does not support Pagination */
+
+  recipes: Meal[] = [];
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  pagRecipesByCategory: Meal[] = [];
+
+  constructor() { }
+
+  public loadRecipesByCategory(category: string) {
+
+    this.httpClient
+      .get<MealResponse>(`${environment.foodApiUrl}search.php?c=${category}`)
+      .subscribe((response) => {
+        this.recipes = response.meals;
+        this.updatePagination();
+      });
+  }
+
+  public updatePagination() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.pagRecipesByCategory = this.recipes.slice(startIndex, endIndex);
+  }
+
+  public goToPage(page: number) {
+    this.currentPage = page;
+    this.updatePagination();
+  }
+}
+```
+
+Antes de usar el servicio, debemos actualizar la configuración en el App.config, agregamos `provideHttpClient( withFetch() )` estp inyecta el cliente **HTTP (HttpClient)** en la aplicación. Esto es necesario porque **Angular** no lo incluye automáticamente en el contenedor de inyección de dependencias a menos que se declare explícitamente.
+
+```typescript
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideClientHydration(),
+    provideHttpClient( withFetch() ),
+  ]
+};
+```
+
+**provideHttpClient()**: Registra e inyecta el servicio HttpClient en tu aplicación o componente.
+
+**withFetch()**: Configura el cliente para usar la API fetch en lugar de XHR.
+
+En nuestra página, **RecipesPageComponent** vamos a inyectar el **RecipesService** 
+
+```typescript
+export default class RecipesPageComponent  implements OnInit{
+  public isLoading = signal(true);
+  public isServer = isPlatformServer(this.platformId);
+
+  private recipeService = inject(RecipesService);
+  public recipesList = signal<MealResponse>( { meals: [] });
+
+  public category = input('Seafood');
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
+    if (!this.isServer) {
+      setTimeout(() => this.isLoading.set(false), 1000);
+    }
+  }
+  ngOnInit(): void {
+    this.recipeService.loadRecipesByCategory(this.category());
+    this.loadPage(1);
+  }
+
+  loadPage(page: number) {
+    this.recipeService.goToPage(page);
+    this.recipesList.set(this.recipeService.pagRecipesByCategory);
+  }
+}
+```
+
+De esta forma podemos pasar el recipesList desde el **RecipesPageComponent**  al **recipe-list**
+
+```html
+<recipe-list [recipeList]="recipesList()"></recipe-list>
+```
+
+y, en el **RecipeListComponent** podemos esperar los datos de esta forma:
+
+```typescript
+export default class RecipeListComponent {
+  recipeList = input.required<MealResponse>();
+}
+```
+
+En el template del mismo **RecipeListComponent** mostramos los datos:
+
+```html
+<div class="grid gap-3
+    grid-cols-1
+    sm:grid-cols-3
+    md:grid-cols-5">
+
+    @for (item of recipeList().meals; track item.idMeal) {
+        <recipe-card [recipe]="item"></recipe-card>
+    }
+    <!-- <div class="col-span-5 text-center border-white h-28 flex justify-center items-center">
+        There are no recipes to show.
+    </div> -->
+</div>
+```
+
+Para que esto funcione, debemos de hacer los mismo con el **RecipeCardComponent** Definimos el input para esperar la receta específica:
+
+```typescript
+export default class RecipeCardComponent {
+  public recipe = input.required<Meal>();
+}
+```
+
+Y lo usamos en el template:
+
+```html
+<div class="bg-blu500 h-72 bg-opacity-25 rounded-md flex flex-col p-4 items-center justify-center cursor-pointer">
+    <img [src]="recipe().strMealThumb" alt="meals"
+         class="w-40 h-40 object-cover rounded-full">
+
+    <div class="text-center mt-2">
+        <h2 class="text-lg font-bold capitalize" style="min-height: 3rem;">
+            {{ recipe().strMeal }}
+        </h2>
+    </div>
+</div>
+```
+
+El resultado:
+
+<img src="./imagenes/02-food-ssr-02.png" alt="Imagen" style="margin-right: 10px; width: 100%; height: auto; border: 1px solid black" />
