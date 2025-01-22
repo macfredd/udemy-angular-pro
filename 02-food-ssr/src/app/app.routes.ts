@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
     {
+        path: '',
+        loadComponent: () => import('./pages/home-page/home-page.component'),
+        title: 'Home',
+    },
+    {
         path: 'about',
         loadComponent: () => import('./pages/about-page/about-page.component'),
         title: 'About Us',

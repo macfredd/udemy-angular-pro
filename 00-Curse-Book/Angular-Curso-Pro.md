@@ -2325,7 +2325,7 @@ export const appConfig: ApplicationConfig = {
 
 **withFetch()**: Configura el cliente para usar la API fetch en lugar de XHR.
 
-En nuestra página, **RecipesPageComponent** vamos a inyectar el **RecipesService** 
+En nuestra página, **RecipesPageComponent** vamos a inyectar el **RecipesService**
 
 ```typescript
 export default class RecipesPageComponent  implements OnInit{
@@ -2413,3 +2413,77 @@ Y lo usamos en el template:
 El resultado:
 
 <img src="./imagenes/02-food-ssr-02.png" alt="Imagen" style="margin-right: 10px; width: 100%; height: auto; border: 1px solid black" />
+
+## QueryParameter
+
+Vamos a agregar un parametro al URL para indicar el número de página, esto lo definimos en el **RecipesPageComponent**
+
+
+```typescript
+  public category = "";
+  public page = 1;
+```
+
+Adicionalmente injectamos:
+
+```typescript
+  private route = inject(ActivatedRoute);
+```
+
+Luego capturamos los valores de los parámetros, o definimos los valores por defecto
+
+```typescript
+ngOnInit(): void {
+
+    this.route.queryParamMap.subscribe(params => {
+      this.category = params.get('c') || 'Miscellaneous';
+      this.page = params.get('page') ? parseInt(params.get('page') as string) : 1;
+    })
+
+    this.recipeService.loadRecipesByCategory(this.category);
+    this.loadPage(this.page);
+  }
+```
+
+Con esto podemos usar el siguiente URL `http://localhost:4200/recipes?c=pasta&page=1` donde c es la categoria y page el número de página inicial.
+
+
+## Categorias sin recetas
+
+En el caso de enviar una categoría que no tenga recetas disponibles,lo primero que debemos hacer es asignar un arreglo vacío en el servicio, de modo que podamos hacer validaciones posterior mas clara.
+
+```typescript
+this.recipes = response.meals ? response.meals : []
+```
+
+Con este cambio, podemos verificar a nivel de plantillas si tenemos recetas disponibles
+
+```typescript
+recipeList().meals.length
+```
+
+El template siguiente muestra una imagen si no existen resultados:
+
+``` html
+<div class="grid gap-3
+    grid-cols-1
+    sm:grid-cols-3
+    md:grid-cols-5">
+
+    @if (recipeList().meals.length === 0) {
+        <div class="col-span-5 text-center border-white h-56 flex justify-center items-center relative bg-cover bg-center" 
+            style="background-image: url('no-recipes.png');">
+            <div class="bg-white bg-opacity-75 px-4 py-2 rounded">
+                There are no recipes to show.
+            </div>
+        </div>
+
+    } @else {
+        @for (item of recipeList().meals; track item.idMeal) {
+            <recipe-card [recipe]="item"></recipe-card>
+        }
+    }
+</div>
+```
+
+<img src="./imagenes/02-food-ssr-03.png" alt="Imagen" style="margin-right: 10px; width: 100%; height: auto; border: 1px solid black" />

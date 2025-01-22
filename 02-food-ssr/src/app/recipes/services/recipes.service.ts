@@ -26,7 +26,7 @@ export class RecipesService {
     this.httpClient
       .get<MealResponse>(url)
       .subscribe((response) => {
-        this.recipes = response.meals;
+        this.recipes = response.meals ? response.meals : [];
         this.updatePagination();
       });
   }
