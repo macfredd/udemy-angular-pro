@@ -3,10 +3,17 @@
     sm:grid-cols-3
     md:grid-cols-5">
 
-    @for (item of recipeList().meals; track item.idMeal) {
-        <recipe-card [recipe]="item"></recipe-card>
+    @if (recipeList().meals.length === 0) {
+        <div class="col-span-5 text-center border-white h-56 flex justify-center items-center relative bg-cover bg-center" 
+            style="background-image: url('no-recipes.png');">
+            <div class="bg-white bg-opacity-75 px-4 py-2 rounded">
+                There are no recipes to show.
+            </div>
+        </div>
+
+    } @else {
+        @for (item of recipeList().meals; track item.idMeal) {
+            <recipe-card [recipe]="item"></recipe-card>
+        }
     }
-    <!-- <div class="col-span-5 text-center border-white h-28 flex justify-center items-center">
-        There are no recipes to show.
-    </div> -->
 </div>

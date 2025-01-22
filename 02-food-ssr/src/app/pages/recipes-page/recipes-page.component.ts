@@ -4,6 +4,7 @@ import RecipeListComponent from '../../recipes/components/recipe-list/recipe-lis
 import { RecipeListSkeletonComponent } from './ui/recipe-list-skeleton/recipe-list-skeleton.component';
 import { RecipesService } from '../../recipes/services/recipes.service';
 import { MealResponse } from '../../recipes/interfaces/meals';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'recipes-page',
@@ -20,7 +21,10 @@ export default class RecipesPageComponent  implements OnInit{
   private recipeService = inject(RecipesService);
   public recipesList = signal<MealResponse>( { meals: [] });
 
-  public category = input('Pasta');
+  public category = "";
+  public page = 1;
+
+  private route = inject(ActivatedRoute);
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object
@@ -29,14 +33,20 @@ export default class RecipesPageComponent  implements OnInit{
       setTimeout(() => this.isLoading.set(false), 1000);
     }
   }
+
   ngOnInit(): void {
-    this.recipeService.loadRecipesByCategory(this.category());
-    this.loadPage(1);
+
+    this.route.queryParamMap.subscribe(params => {
+      this.category = params.get('c') || 'Miscellaneous';
+      this.page = params.get('page') ? parseInt(params.get('page') as string) : 1;
+    })
+
+    this.recipeService.loadRecipesByCategory(this.category);
+    this.loadPage(this.page);
   }
 
   loadPage(page: number) {
     this.recipeService.goToPage(page);
     this.recipesList.set(this.recipeService.pagRecipesByCategory);
-    console.log(this.recipesList());
   }
 }
