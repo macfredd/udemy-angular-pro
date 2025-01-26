@@ -38,9 +38,11 @@ export class RecipesService {
   }
 
   public goToPage(page: number) {
-
-    if (page < 1 || page > Math.ceil(this.recipes.length / this.itemsPerPage)) {
-      page = 1;
+    if (!page ||
+      isNaN(page)||
+      page < 1 ||
+      page > Math.ceil(this.recipes.length / this.itemsPerPage)) {
+        page = 1;
     }
 
     this.currentPage = page;

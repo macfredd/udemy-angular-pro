@@ -2447,6 +2447,68 @@ ngOnInit(): void {
 
 Con esto podemos usar el siguiente URL `http://localhost:4200/recipes?c=pasta&page=1` donde c es la categoria y page el número de página inicial.
 
+## Observable vs Signal
+
+Para obtener el número de página del queryString nos hemos suscrito a `this.route.queryParamMap.subscribe()` esto está bien pero tiene ciertas desventajas:
+
+**Suscripción manual:** nos debemos suscribir al observable, y aunque Angular lo limpia automáticamente en componentes con **OnDestroy**, puede llevar a fugas de memoria si no se maneja adecuadamente.
+
+**Manejo explícito del estado:** Necesitamos actualizar las propiedades del componente (`this.page, this.category`) manualmente en cada emisión, lo que puede ser más propenso a errores.
+
+**Complejidad adicional:** Para casos simples, el manejo de un observable puede sentirse innecesariamente complicado.
+
+Por otro lado tiene la ventaja que es compatible con código legacy además de la Integración con RxJS, lo que permite usar una gran cantidad de operadores para implementar flujos más complejos.
+
+Para versiones recientes de angular +16, podemos usar **signals**
+
+```typescript
+public currentPage = toSignal(
+  this.route.queryParamMap.pipe(
+    map(params => params.get('page') ?? '1'),
+    map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
+    map(page => Math.max(1, page))
+  ),
+  { initialValue: 1 }
+);
+```
+
+**{ initialValue: 1 }** Si bien es cierto que internamente con el **map** asiganmos un valor por defecto **1**, angular determina que podría ser posible que el `this.route.queryParamMap` no esté definido, por lo tanto si no usamos el **initialValue** la señal es tipada como `number | undefined`. El _undefined_ nos genera algunas molestias, ya que cualquier metodo que acepte como parametro **currentPage** tiene que manejar que dicha variable podría no estar definida. En este caso al establecer un valor general como inicial, nos garantiza que siempre vamos a tener ese valor, por lo tanto el signal es tipado como `number`
+
+El código actualizado:
+
+```typescript
+  public currentPage = toSignal(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('page') ?? '1'),
+      map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
+      map(page => Math.max(1, page))
+    ),
+    { initialValue: 1 }
+  );
+
+  public category = toSignal(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('c') ?? 'Miscellaneous'),
+      map(category => category.trim() == '' ? 'Miscellaneous' : category)
+    ),
+    { initialValue: 'Miscellaneous' }
+  );
+
+  ngOnInit(): void {
+    this.recipeService.loadRecipesByCategory(this.category());
+    this.loadPage(this.currentPage());
+  }
+```
+
+Ventajas:
+
+  **Simplicidad declarativa:** La señal se actualiza automáticamente con el valor más reciente del observable. No se necesita suscripciones explícitas ni lógica adicional para sincronizar el estado.
+
+  **Reactividad directa:** Las señales son reactivas por diseño, lo que permite usarlas directamente en las plantillas sin necesidad de operadores como **async**.
+
+  **Menos propenso a fugas de memoria:** Al usar **toSignal**, Angular se encarga del manejo del ciclo de vida, liberando automáticamente los recursos asociados al observable cuando el componente se destruye.
+
+  **Optimización de rendimiento:** Las señales están optimizadas para Angular y pueden ofrecer mejor rendimiento en ciertas situaciones porque solo actualizan lo necesario.
 
 ## Categorias sin recetas
 

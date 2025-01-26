@@ -5,6 +5,8 @@ import { RecipeListSkeletonComponent } from './ui/recipe-list-skeleton/recipe-li
 import { RecipesService } from '../../recipes/services/recipes.service';
 import { MealResponse } from '../../recipes/interfaces/meals';
 import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { isEmpty, map } from 'rxjs';
 
 @Component({
   selector: 'recipes-page',
@@ -21,10 +23,24 @@ export default class RecipesPageComponent  implements OnInit{
   private recipeService = inject(RecipesService);
   public recipesList = signal<MealResponse>( { meals: [] });
 
-  public category = "";
-  public page = 1;
-
   private route = inject(ActivatedRoute);
+
+  public currentPage = toSignal(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('page') ?? '1'),
+      map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
+      map(page => Math.max(1, page))
+    ),
+    { initialValue: 1 }
+  );
+
+  public category = toSignal(
+    this.route.queryParamMap.pipe(
+      map(params => params.get('c') ?? 'Miscellaneous'),
+      map(category => category.trim() == '' ? 'Miscellaneous' : category)
+    ),
+    { initialValue: 'Miscellaneous' }
+  );
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object
@@ -35,14 +51,8 @@ export default class RecipesPageComponent  implements OnInit{
   }
 
   ngOnInit(): void {
-
-    this.route.queryParamMap.subscribe(params => {
-      this.category = params.get('c') || 'Miscellaneous';
-      this.page = params.get('page') ? parseInt(params.get('page') as string) : 1;
-    })
-
-    this.recipeService.loadRecipesByCategory(this.category);
-    this.loadPage(this.page);
+    this.recipeService.loadRecipesByCategory(this.category());
+    this.loadPage(this.currentPage());
   }
 
   loadPage(page: number) {
