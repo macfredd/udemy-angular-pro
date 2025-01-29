@@ -2,6 +2,13 @@
 <h2 class="text-xl">Current Page: {{ currentPage() }}</h2>
 
 <hr class="my-2">
+@if (recipesList().meals.length > 0) {
+  <div class="flex justify-between">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" (click)="stepPage(-1)">Previous</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" (click)="stepPage(+1)">Next</button>
+  </div>
+}
+<hr class="my-2">
 
 @if(isLoading() || isServer) {
   <recipe-list-skeleton></recipe-list-skeleton>
@@ -9,11 +16,5 @@
   <recipe-list [recipeList]="recipesList()"></recipe-list>
 }
 
-<hr class="my-2">
-@if (recipesList().meals.length > 0) {
-  <div class="flex justify-between">
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</button>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</button>
-  </div>
-}
+
 

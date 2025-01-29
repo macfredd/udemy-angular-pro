@@ -34,10 +34,12 @@ export class RecipesService {
   public updatePagination() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    this.pagRecipesByCategory.meals = this.recipes.slice(startIndex, endIndex);
+    this.pagRecipesByCategory = {
+      meals: [...this.recipes.slice(startIndex, endIndex)]
+    };
   }
 
-  public goToPage(page: number) {
+  public goToPage(page: number): number {
     if (!page ||
       isNaN(page)||
       page < 1 ||
@@ -47,5 +49,6 @@ export class RecipesService {
 
     this.currentPage = page;
     this.updatePagination();
+    return page;
   }
 }

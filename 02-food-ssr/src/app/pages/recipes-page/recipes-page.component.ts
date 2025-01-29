@@ -4,9 +4,9 @@ import RecipeListComponent from '../../recipes/components/recipe-list/recipe-lis
 import { RecipeListSkeletonComponent } from './ui/recipe-list-skeleton/recipe-list-skeleton.component';
 import { RecipesService } from '../../recipes/services/recipes.service';
 import { MealResponse } from '../../recipes/interfaces/meals';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { isEmpty, map } from 'rxjs';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'recipes-page',
@@ -23,10 +23,12 @@ export default class RecipesPageComponent  implements OnInit{
   private recipeService = inject(RecipesService);
   public recipesList = signal<MealResponse>( { meals: [] });
 
-  private route = inject(ActivatedRoute);
+  private activeRoute = inject(ActivatedRoute);
+  private router = inject(Router)
+
 
   public currentPage = toSignal(
-    this.route.queryParamMap.pipe(
+    this.activeRoute.queryParamMap.pipe(
       map(params => params.get('page') ?? '1'),
       map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
       map(page => Math.max(1, page))
@@ -35,7 +37,7 @@ export default class RecipesPageComponent  implements OnInit{
   );
 
   public category = toSignal(
-    this.route.queryParamMap.pipe(
+    this.activeRoute.queryParamMap.pipe(
       map(params => params.get('c') ?? 'Miscellaneous'),
       map(category => category.trim() == '' ? 'Miscellaneous' : category)
     ),
@@ -58,5 +60,19 @@ export default class RecipesPageComponent  implements OnInit{
   loadPage(page: number) {
     this.recipeService.goToPage(page);
     this.recipesList.set(this.recipeService.pagRecipesByCategory);
+  }
+
+  stepPage(jump : number) {
+    var newPage = this.currentPage() + jump;
+    newPage = this.recipeService.goToPage(newPage);
+    this.updateQueryParam({ page : newPage });
+    this.recipesList.set(this.recipeService.pagRecipesByCategory);
+  }
+
+  updateQueryParam(obj: object) {
+    this.router.navigate([], {
+      queryParams: obj,
+      queryParamsHandling: 'merge'
+    });
   }
 }

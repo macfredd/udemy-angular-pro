@@ -13,5 +13,4 @@ import { MealResponse } from '../../interfaces/meals';
 export default class RecipeListComponent {
 
   recipeList = input.required<MealResponse>();
-
 }
