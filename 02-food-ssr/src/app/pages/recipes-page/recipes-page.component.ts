@@ -4,9 +4,9 @@ import RecipeListComponent from '../../recipes/components/recipe-list/recipe-lis
 import { RecipeListSkeletonComponent } from './ui/recipe-list-skeleton/recipe-list-skeleton.component';
 import { RecipesService } from '../../recipes/services/recipes.service';
 import { MealResponse } from '../../recipes/interfaces/meals';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { filter, map, startWith } from 'rxjs';
 
 @Component({
   selector: 'recipes-page',
@@ -53,8 +53,15 @@ export default class RecipesPageComponent  implements OnInit{
   }
 
   ngOnInit(): void {
-    this.recipeService.loadRecipesByCategory(this.category());
-    this.loadPage(this.currentPage());
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      startWith({ url: this.router.url } as NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      if (event.url === '/recipes') {
+        this.recipeService.loadRecipesByCategory(this.category());
+        this.loadPage(this.currentPage());
+      }
+    });
   }
 
   loadPage(page: number) {

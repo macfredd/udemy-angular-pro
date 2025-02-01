@@ -2549,3 +2549,134 @@ El template siguiente muestra una imagen si no existen resultados:
 ```
 
 <img src="./imagenes/02-food-ssr-03.png" alt="Imagen" style="margin-right: 10px; width: 100%; height: auto; border: 1px solid black" />
+
+## Paginación
+
+Antes de explicar los cambios de la paginación, es importante mencionar que el queryParam (Uri) debe ser actualizado a medida que nos movemos entre páginas. Inicialmente al carga la lista de recipes, el url muesta `http://localhost:4200/recipes` internamente el componente **RecipesPageComponent**, dado que no se carga el parametro **page** le asigna un valor inicial de 1. Tal como lo vimos anteriormente con esta inicialización:
+
+```typescript
+public currentPage = toSignal(
+    this.activeRoute.queryParamMap.pipe(
+      map(params => params.get('page') ?? '1'),
+      map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
+      map(page => Math.max(1, page))
+    ),
+    { initialValue: 1 }
+  );
+```
+
+Lo siguiente es definir un método para manejar los saltos de página, dicho método es:
+
+```typescript
+stepPage(jump : number) {
+    var newPage = this.currentPage() + jump;
+    newPage = this.recipeService.goToPage(newPage);
+    this.updateQueryParam({ page : newPage });
+    this.recipesList.set(this.recipeService.pagRecipesByCategory);
+  }
+```
+
+Antes de explicar este método, este se llama desde el template:
+
+```html
+<div class="flex justify-between">
+    <button (click)="stepPage(-1)">Previous</button>
+    <button (click)="stepPage(+1)">Next</button>
+  </div>
+```
+
+**stepPage** aumenta o disminuye en 1 la página actual, si nos movemos a la siguiente página desde el estado inicial, pag = 1, **newPage** tomaría el valor de 2. `var newPage = this.currentPage() + jump;`
+
+Postriormente el servicio intenta moverse a dicha página, si eisten elementos para mostrar, se carga dichos elementos y retorna el número de página a la que se ha movido, en este caso 2. `newPage = this.recipeService.goToPage(newPage);`
+
+**newPage** ahora tiene el valor de dos, y tenemos que actualizar **currentPage** pero como esta es una señal de solo lectura, entonces debemos actualizar el observable a partir del cual se actualiza la señal. En este caso debemos actualizar el QueryParam. Recordemos que **currentPage** se actualiza dependiendo de: `this.activeRoute.queryParamMap`
+
+```typescript
+public currentPage = toSignal(
+    this.activeRoute.queryParamMap.pipe(
+      map(params => params.get('page') ?? '1'),
+      map(page => isNaN(parseInt(page)) ? 1 : parseInt(page)),
+      map(page => Math.max(1, page))
+    ),
+    { initialValue: 1 }
+  );
+```
+
+Por este razón no podemos hacer un set al **currentPage**, en su lugar debemos actualizar el queryParam y eso lo hacemos con el método:
+
+```typescript
+updateQueryParam(obj: object) {
+    this.router.navigate([], {
+      queryParams: obj,
+      queryParamsHandling: 'merge'
+    });
+  }
+```
+Este método se llama:
+
+```typescript
+this.updateQueryParam({ page : newPage });
+```
+
+Una vez actualizado el queryParams (page) automáticamente actualizacion el **currentPage**
+
+Finalmente necesitamos actualizar la señal `this.recipesList` y eso actualiza la lista de items a mostrar.
+
+```typescript
+this.recipesList.set(this.recipeService.pagRecipesByCategory);
+```
+
+## Mutables
+
+El código actual, a nivel del servicio
+
+```typescript
+public updatePagination() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.pagRecipesByCategory.meals = this.recipes.slice(startIndex, endIndex);
+  }
+```
+
+La línea `this.pagRecipesByCategory.meals = this.recipes.slice(startIndex, endIndex);` tiene un problema, porque `this.pagRecipesByCategory.meals` está siendo actualizado de manera **mutable**, pero Angular Signals no detecta el cambio, ya que la referencia del objeto **pagRecipesByCategory** se mantiene intacta. **Angular observa los objetos mediante referencias, y si esta no cambia, no sabe que hay modificaciones internas.**
+
+por lo tanto lo ideal es cambiar dicha línea por:
+
+```typescript
+    this.pagRecipesByCategory = {
+      meals: [...this.recipes.slice(startIndex, endIndex)]
+    };
+```
+
+En este caso cambiamos la referencia y no solo el contenido de `this.pagRecipesByCategory.meals` al hacerlo Angular detecta el cambio y actualizará las señales.
+
+## Recargar lista
+
+Mientras navegamos a otras páginas, y hacemos clic en el link recipe, Angular no recarga el componente por defecto si ya estás en la misma ruta, incluso si el estado del componente debe cambiar. Esto hace que incluso al momento de regresar a la pág #1 no se recarguen los datos y se muestren las recetas de la última página cargada.
+
+Para solucionar esto, vamos a usar el NavitationEnd events, es decir, cada vez que se dispare un evento de navegación, verificamos si debemos cargar nuevamente las recetas.
+
+
+```typescript
+ngOnInit(): void {
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      startWith({ url: this.router.url } as NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      if (event.url === '/recipes') {
+        this.recipeService.loadRecipesByCategory(this.category());
+        this.loadPage(this.currentPage());
+      }
+    });
+  }
+```
+
+Primeramente obtenemos un flujo (Observable) de los eventos generados por el enrutador de Angular: `this.router.events.pipe(`, luego se filtra los eventos del enrutador para permitir solo los de tipo **NavigationEnd**, que indican que la navegación ha concluido.
+
+**Nota**: La función de tipo `(event): event is NavigationEnd` asegura que TypeScript reconozca el evento filtrado como **NavigationEnd**.
+
+`startWith({ url: this.router.url } as NavigationEnd)`
+
+Simula la emisión inicial de un evento **NavigationEnd**, utilizando la URL actual (`this.router.url`). Esto asegura que la lógica de recarga también se ejecute en la primera carga del componente.
+
+A continuación verificamos si la URL actual es **/recipes** antes de ejecutar la lógica de recarga.
