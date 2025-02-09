@@ -24,6 +24,6 @@ export const routes: Routes = [
     {
         path: 'recipes',
         loadComponent: () => import('./pages/recipes-page/recipes-page.component'),
-        title: 'Recipes'
+        /* title will be set dynamically */
     },
 ];

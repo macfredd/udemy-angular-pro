@@ -2308,6 +2308,10 @@ export class RecipesService {
 }
 ```
 
+<aside class="nota-importante">
+<p>Más adelante encontramos un problema con la implementación del método <strong>loadRecipesByCategory</strong> ya que el Servicio al realizar el subscribe causa que bajo ciertos condiciones, el servicio espere por la respuesta de la llamada HTTP, mientras que el componente continua renderizandose. Por lo tanto, es posible que se cargue el componente sin las recetas. Esto se va a solucionar regresando un observable, además de mover toda la lógica de la paginación al componente</p>
+</aside>
+
 Antes de usar el servicio, debemos actualizar la configuración en el App.config, agregamos `provideHttpClient( withFetch() )` estp inyecta el cliente **HTTP (HttpClient)** en la aplicación. Esto es necesario porque **Angular** no lo incluye automáticamente en el contenedor de inyección de dependencias a menos que se declare explícitamente.
 
 ```typescript
