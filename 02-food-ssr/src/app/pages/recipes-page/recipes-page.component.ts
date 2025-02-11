@@ -99,7 +99,6 @@ export default class RecipesPageComponent  implements OnInit{
   }
 
   loadPage(page: number) {
-    console.log("from Component: " , this.pagRecipesByCategory);
     this.title.setTitle(`Recipes - Page ${page}`);
     this.goToPage(page);
     this.recipesList.set(this.pagRecipesByCategory);
