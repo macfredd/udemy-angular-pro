@@ -1,0 +1,9 @@
+
+<h1> {{ recipe()?.strMeal }}</h1>
+
+<div class="recipe-container">
+    <p class="recipe-text">{{ recipe()?.strInstructions }}</p>
+    <div class="recipe-image">
+      <img [src]="recipe()?.strMealThumb" alt="recipe image" />
+    </div>
+  </div>

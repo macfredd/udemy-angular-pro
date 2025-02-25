@@ -3,7 +3,7 @@ import { isPlatformServer } from '@angular/common';
 import RecipeListComponent from '../../recipes/components/recipe-list/recipe-list.component';
 import { RecipeListSkeletonComponent } from './ui/recipe-list-skeleton/recipe-list-skeleton.component';
 import { RecipesService } from '../../recipes/services/recipes.service';
-import { Meal, MealResponse } from '../../recipes/interfaces/meals';
+import { Meal, MealResponse } from '../../recipes/interfaces/meals.interface';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -66,7 +66,6 @@ export default class RecipesPageComponent  implements OnInit{
       startWith({ url: this.router.url } as NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       if (event.url.startsWith('/recipes')) {
-        console.log('point c1');
         this.recipeService.loadRecipesByCategory(this.category())
         .subscribe((response) => {
           this.recipes = response.meals ? response.meals : [];

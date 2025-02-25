@@ -2684,3 +2684,64 @@ Primeramente obtenemos un flujo (Observable) de los eventos generados por el enr
 Simula la emisión inicial de un evento **NavigationEnd**, utilizando la URL actual (`this.router.url`). Esto asegura que la lógica de recarga también se ejecute en la primera carga del componente.
 
 A continuación verificamos si la URL actual es **/recipes** antes de ejecutar la lógica de recarga.
+
+
+## Nueva página, detalle de receta
+
+Agregamos el componente
+
+```bash
+$ ng g c pages/recipePage
+```
+
+Actualizamos la ruta:
+
+```json
+{
+  path: 'recipes/:id',
+  loadComponent: () => import('./pages/recipe-page/recipe-page.component'),
+  /* title will be set dynamically */
+    },
+```
+
+Creamos un link desde el recipe-card, pero antes, en el componente **RecipeCardComponent** importamos el RouterLink.
+
+```typescript
+imports: [
+    RouterLink
+  ],
+```
+
+Y luego en el template del mismo componente Card usamos el routerLink para crear un link a la página de receta específica.
+
+```html
+<div [routerLink]="['/recipes/', recipe().idMeal]">
+    <img [src]="recipe().strMealThumb" alt=""
+         class="w-40 h-40 object-cover rounded-full">
+
+    <div class="text-center mt-2">
+        <h3 class="text-lg font-bold capitalize" style="min-height: 3rem;">
+            {{ recipe().strMeal }}
+        </h3>
+    </div>
+</div>
+```
+
+`recipe().idMeal` retorna el id de la receta.
+
+Recordemos la interfaz **meal**
+
+```typescript
+export interface Meal {
+    strMeal:      string;
+    strMealThumb: string;
+    idMeal:       string;
+}
+
+export interface MealResponse {
+    meals: Meal[];
+}
+```
+
+## Template de la página
+

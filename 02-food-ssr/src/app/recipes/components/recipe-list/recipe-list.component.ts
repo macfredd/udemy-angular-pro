@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import RecipeCardComponent from "../recipe-card/recipe-card.component";
-import { MealResponse } from '../../interfaces/meals';
+import { MealResponse } from '../../interfaces/meals.interface';
 
 @Component({
   selector: 'recipe-list',
